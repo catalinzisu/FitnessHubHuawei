@@ -81,7 +81,7 @@ data class WorkoutSessionEntity(
     /** Epoch millis; null while the workout is in progress. */
     val endedAt: Long? = null,
     val notes: String? = null,
-    /** Filled from Health Connect after the session ends (week 4). */
+    /** Watch data from Health Connect for the session's time range; filled after it ends. */
     val avgHr: Long? = null,
     val maxHr: Long? = null,
     val kcal: Double? = null,
@@ -163,6 +163,18 @@ data class TemplateExerciseRow(
 data class SessionExerciseRow(
     @Embedded val item: SessionExerciseEntity,
     val exerciseName: String,
+    val equipment: String,
+)
+
+/** One logged set of an exercise, with the start time of its (finished) session. */
+data class ExerciseHistorySet(
+    val sessionId: Long,
+    val startedAt: Long,
+    val setNumber: Int,
+    val weightKg: Double,
+    val reps: Int,
+    val rpe: Double?,
+    val isWarmup: Boolean,
 )
 
 data class SessionSummary(
@@ -172,4 +184,6 @@ data class SessionSummary(
     val templateName: String?,
     val workingSets: Int,
     val exerciseCount: Int,
+    val avgHr: Long?,
+    val kcal: Double?,
 )

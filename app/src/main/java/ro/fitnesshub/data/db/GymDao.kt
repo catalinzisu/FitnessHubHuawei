@@ -22,6 +22,9 @@ abstract class GymDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertExercises(exercises: List<ExerciseEntity>)
 
+    @Query("SELECT * FROM exercise WHERE id = :id")
+    abstract suspend fun getExercise(id: Long): ExerciseEntity?
+
     /** Returns the new id, or -1 if an exercise with the same name exists. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertExercise(exercise: ExerciseEntity): Long
@@ -90,7 +93,7 @@ abstract class GymDao {
 
     @Query(
         """
-        SELECT ws.id, ws.startedAt, ws.endedAt, t.name AS templateName,
+        SELECT ws.id, ws.startedAt, ws.endedAt, ws.avgHr, ws.kcal, t.name AS templateName,
             (SELECT COUNT(*) FROM set_entry se WHERE se.sessionId = ws.id AND se.isWarmup = 0) AS workingSets,
             (SELECT COUNT(DISTINCT se.exerciseId) FROM set_entry se WHERE se.sessionId = ws.id) AS exerciseCount
         FROM workout_session ws
@@ -163,11 +166,27 @@ abstract class GymDao {
     @Query("DELETE FROM workout_session WHERE id = :id")
     abstract suspend fun deleteSession(id: Long)
 
+    @Query("SELECT * FROM workout_session WHERE id = :id")
+    abstract suspend fun getSession(id: Long): WorkoutSessionEntity?
+
+    @Query("UPDATE workout_session SET avgHr = :avgHr, maxHr = :maxHr, kcal = :kcal WHERE id = :id")
+    abstract suspend fun updateSessionStats(id: Long, avgHr: Long?, maxHr: Long?, kcal: Double?)
+
+    /** Finished sessions since [since] that have no watch data yet (the watch often syncs later). */
+    @Query(
+        """
+        SELECT * FROM workout_session
+        WHERE endedAt IS NOT NULL AND endedAt >= :since AND avgHr IS NULL AND kcal IS NULL
+        ORDER BY startedAt
+        """,
+    )
+    abstract suspend fun sessionsMissingStats(since: Long): List<WorkoutSessionEntity>
+
     // ---- Session exercises ----
 
     @Query(
         """
-        SELECT se.*, e.name AS exerciseName
+        SELECT se.*, e.name AS exerciseName, e.equipment AS equipment
         FROM session_exercise se
         JOIN exercise e ON e.id = se.exerciseId
         WHERE se.sessionId = :sessionId
@@ -229,4 +248,29 @@ abstract class GymDao {
         """,
     )
     abstract suspend fun previousSets(exerciseId: Long, excludeSessionId: Long): List<SetEntryEntity>
+
+    // ---- Progress ----
+
+    /** Every set of this exercise from finished sessions, oldest first. */
+    @Query(
+        """
+        SELECT se.sessionId, ws.startedAt, se.setNumber, se.weightKg, se.reps, se.rpe, se.isWarmup
+        FROM set_entry se
+        JOIN workout_session ws ON ws.id = se.sessionId
+        WHERE se.exerciseId = :exerciseId AND ws.endedAt IS NOT NULL
+        ORDER BY ws.startedAt, se.setNumber
+        """,
+    )
+    abstract fun observeExerciseHistory(exerciseId: Long): Flow<List<ExerciseHistorySet>>
+
+    @Query(
+        """
+        SELECT se.sessionId, ws.startedAt, se.setNumber, se.weightKg, se.reps, se.rpe, se.isWarmup
+        FROM set_entry se
+        JOIN workout_session ws ON ws.id = se.sessionId
+        WHERE se.exerciseId = :exerciseId AND ws.endedAt IS NOT NULL AND se.sessionId != :excludeSessionId
+        ORDER BY ws.startedAt, se.setNumber
+        """,
+    )
+    abstract suspend fun exerciseHistory(exerciseId: Long, excludeSessionId: Long): List<ExerciseHistorySet>
 }

@@ -19,6 +19,8 @@ class HealthRepository(
 ) {
     fun sdkStatus(): Int = source.sdkStatus()
 
+    fun backgroundReadSupported(): Boolean = source.backgroundReadSupported()
+
     fun observeDay(date: LocalDate): Flow<DailySummaryEntity?> = dao.observe(date.toString())
 
     /** True when every read permission is granted. */

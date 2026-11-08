@@ -160,6 +160,42 @@
     <string name="seed_failed">Could not write test data. Details are in the debug log.</string>
     <string name="seed_working">Working…</string>
 
+    <!-- Progress, PRs, watch data (week 4) -->
+    <string name="session_new_pr">New personal record!</string>
+    <string name="session_pr_badge">PR</string>
+    <string name="session_hint_add_weight">Today: try %1$s kg × %2$d. Last time every set hit the top of the range.</string>
+    <string name="session_hint_add_reps">Today: %1$s kg, aim for %2$d reps on every set.</string>
+    <string name="session_hint_repeat">Today: stay at %1$s kg until every set reaches %2$d reps.</string>
+    <string name="session_watch_title">From your watch</string>
+    <string name="session_watch_none">No heart rate or calories for this workout yet. They appear after Gadgetbridge syncs the watch.</string>
+    <string name="session_watch_avg_hr">avg %1$d bpm</string>
+    <string name="session_watch_max_hr">max %1$d bpm</string>
+    <string name="session_watch_kcal">%1$d kcal</string>
+    <string name="progress_title">Progress</string>
+    <string name="progress_empty">No finished workouts with this exercise yet. Log it in a workout and tap Finish to see your progress here.</string>
+    <string name="progress_best_1rm">Best est. 1RM</string>
+    <string name="progress_heaviest">Heaviest set</string>
+    <string name="progress_best_volume">Best volume</string>
+    <string name="progress_kg">%1$s kg</string>
+    <plurals name="progress_sessions">
+        <item quantity="one">%1$d workout so far</item>
+        <item quantity="other">%1$d workouts so far</item>
+    </plurals>
+    <string name="progress_chart_1rm">Estimated 1RM (kg)</string>
+    <string name="progress_chart_1rm_note">Best set of each workout, Epley formula. Sets above 12 reps are left out.</string>
+    <string name="progress_chart_volume">Volume per workout (kg)</string>
+    <string name="progress_chart_volume_note">Weight × reps of all working sets. Warm-ups are left out.</string>
+    <string name="progress_history">History</string>
+    <string name="progress_session_1rm">Est. 1RM %1$s kg</string>
+    <string name="settings_background_sync">Background sync</string>
+    <string name="settings_background_sync_on">On. Syncs about every 3 hours, even when the app is closed.</string>
+    <string name="settings_background_sync_off">Off. Data syncs when you open the app. Tap to allow syncing in the background.</string>
+    <string name="settings_background_sync_unsupported">Not supported by this Health Connect version. Data syncs when you open the app.</string>
+    <string name="settings_export">Save workouts to Health Connect</string>
+    <string name="settings_export_on">On. Finished gym workouts appear in Health Connect as strength training.</string>
+    <string name="settings_export_off">Off. Tap to let other health apps see your gym workouts.</string>
+    <string name="settings_export_unsupported">Health Connect is not available.</string>
+
     <!-- Log -->
     <string name="log_title">Debug log</string>
     <string name="log_empty">No events yet.</string>
@@ -168,5 +204,5 @@
 
     <!-- Privacy -->
     <string name="privacy_title">Privacy policy</string>
-    <string name="privacy_body">Fitness Hub is a student project. It is not a medical device and does not give medical advice.\n\nWhat it reads: steps, distance, calories, heart rate, resting heart rate, sleep, workouts, SpO2 and weight from Health Connect, only for the types you allow. You can change this any time in Health Connect.\n\nWhere data is stored: only on this phone, in the app\'s private database. There is no account and no server. Cloud backup of the database is turned off.\n\nWhat leaves the phone: nothing in this version. A later version adds an optional AI coach. It is off by default and, when you turn it on, sends only a short, anonymous summary with rounded numbers, which you can preview before each request.\n\nYour control: you can revoke Health Connect access at any time. Uninstalling the app deletes all of its data.</string>
+    <string name="privacy_body">Fitness Hub is a student project. It is not a medical device and does not give medical advice.\n\nWhat it reads: steps, distance, calories, heart rate, resting heart rate, sleep, workouts, SpO2 and weight from Health Connect, only for the types you allow. If you allow it, it also reads in the background, about every 3 hours. You can change this any time in Health Connect.\n\nWhat it writes: if you allow it, each finished gym workout is saved to Health Connect as a strength-training session (start, end and name only, no sets).\n\nWhere data is stored: only on this phone, in the app\'s private database. There is no account and no server. Cloud backup of the database is turned off.\n\nWhat leaves the phone: nothing in this version. A later version adds an optional AI coach. It is off by default and, when you turn it on, sends only a short, anonymous summary with rounded numbers, which you can preview before each request.\n\nYour control: you can revoke Health Connect access at any time. Uninstalling the app deletes all of its data.</string>
 </resources>

@@ -17,6 +17,7 @@ import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.db.DailySummaryEntity
 import ro.fitnesshub.data.health.HealthPermissions
+import ro.fitnesshub.sync.HealthSync
 import ro.fitnesshub.util.AppLog
 import java.time.LocalDate
 
@@ -30,9 +31,14 @@ data class DashboardUiState(
     val summary: DailySummaryEntity? = null,
     val isSyncing: Boolean = false,
     val syncFailed: Boolean = false,
+    /** What "Grant access" asks for; depends on the Health Connect version. */
+    val permissionsToRequest: Set<String> = HealthPermissions.requested(backgroundSupported = false),
 )
 
-class DashboardViewModel(private val repository: HealthRepository) : ViewModel() {
+class DashboardViewModel(
+    private val repository: HealthRepository,
+    private val sync: HealthSync,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardUiState())
     val state: StateFlow<DashboardUiState> = _state.asStateFlow()
@@ -62,6 +68,9 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
                 AppLog.w(TAG, "Health Connect status: $status")
                 return@launch
             }
+            _state.update {
+                it.copy(permissionsToRequest = HealthPermissions.requested(repository.backgroundReadSupported()))
+            }
 
             val permissions = when {
                 repository.hasAllReadPermissions() -> PermissionState.All
@@ -73,7 +82,7 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
 
             _state.update { it.copy(isSyncing = true, syncFailed = false) }
             try {
-                repository.syncDay()
+                sync.syncRecent()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -86,7 +95,7 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
     }
 
     fun onPermissionsResult(granted: Set<String>) {
-        AppLog.i(TAG, "Permissions granted: ${granted.size} of ${HealthPermissions.requested.size}")
+        AppLog.i(TAG, "Permissions granted: ${granted.size} of ${_state.value.permissionsToRequest.size}")
         refresh()
     }
 
@@ -96,7 +105,7 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp
-                DashboardViewModel(app.container.healthRepository)
+                DashboardViewModel(app.container.healthRepository, app.container.healthSync)
             }
         }
     }

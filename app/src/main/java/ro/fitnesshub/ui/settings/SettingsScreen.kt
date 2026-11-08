@@ -1,5 +1,7 @@
 package ro.fitnesshub.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,10 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ro.fitnesshub.BuildConfig
 import ro.fitnesshub.R
+import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.ui.common.HealthConnectIntents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +51,14 @@ fun SettingsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmSeed by rememberSaveable { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract(),
+    ) { viewModel.refresh() }
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(state.message) {
         val message = state.message ?: return@LaunchedEffect
@@ -68,6 +81,22 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_hc),
                 description = stringResource(R.string.settings_hc_desc),
                 onClick = { HealthConnectIntents.openSettings(context) },
+            )
+            OptionalAccessRow(
+                title = stringResource(R.string.settings_background_sync),
+                access = state.backgroundSync,
+                onText = R.string.settings_background_sync_on,
+                offText = R.string.settings_background_sync_off,
+                unsupportedText = R.string.settings_background_sync_unsupported,
+                onRequest = { permissionLauncher.launch(setOf(HealthPermissions.BACKGROUND)) },
+            )
+            OptionalAccessRow(
+                title = stringResource(R.string.settings_export),
+                access = state.workoutExport,
+                onText = R.string.settings_export_on,
+                offText = R.string.settings_export_off,
+                unsupportedText = R.string.settings_export_unsupported,
+                onRequest = { permissionLauncher.launch(setOf(HealthPermissions.WRITE_WORKOUTS)) },
             )
             SettingsRow(
                 title = stringResource(R.string.settings_privacy),
@@ -133,5 +162,29 @@ private fun SettingsRow(
         headlineContent = { Text(title) },
         supportingContent = { Text(description) },
         modifier = Modifier.clickable(enabled = enabled, onClick = onClick),
+    )
+}
+
+/** A row for an optional permission: tapping it asks for the permission while it is off. */
+@Composable
+private fun OptionalAccessRow(
+    title: String,
+    access: OptionalAccess,
+    @StringRes onText: Int,
+    @StringRes offText: Int,
+    @StringRes unsupportedText: Int,
+    onRequest: () -> Unit,
+) {
+    val description = when (access) {
+        OptionalAccess.On -> stringResource(onText)
+        OptionalAccess.Off -> stringResource(offText)
+        OptionalAccess.Unsupported -> stringResource(unsupportedText)
+        OptionalAccess.Unknown -> ""
+    }
+    SettingsRow(
+        title = title,
+        description = description,
+        enabled = access == OptionalAccess.Off,
+        onClick = onRequest,
     )
 }

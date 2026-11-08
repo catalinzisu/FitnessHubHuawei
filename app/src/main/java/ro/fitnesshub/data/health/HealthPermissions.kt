@@ -34,11 +34,22 @@ object HealthPermissions {
         WeightRecord::class,
     ).map { HealthPermission.getReadPermission(it) }.toSet()
 
+    /** Finished gym sessions are saved to Health Connect as strength-training sessions. */
+    val WRITE_WORKOUTS: String = HealthPermission.getWritePermission(ExerciseSessionRecord::class)
+
+    /** Lets WorkManager sync while the app is closed (only on Health Connect versions that support it). */
+    val BACKGROUND: String = HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
+
     /** Only used by the debug "Seed test data" tool (see src/debug/AndroidManifest.xml). */
     val SEED_WRITE: Set<String> = SeedDataWriter.RECORD_TYPES
         .map { HealthPermission.getWritePermission(it) }
         .toSet()
 
     /** What the permission screen asks for in this build. */
-    val requested: Set<String> = if (BuildConfig.DEBUG) READ + SEED_WRITE else READ
+    fun requested(backgroundSupported: Boolean): Set<String> = buildSet {
+        addAll(READ)
+        add(WRITE_WORKOUTS)
+        if (backgroundSupported) add(BACKGROUND)
+        if (BuildConfig.DEBUG) addAll(SEED_WRITE)
+    }
 }

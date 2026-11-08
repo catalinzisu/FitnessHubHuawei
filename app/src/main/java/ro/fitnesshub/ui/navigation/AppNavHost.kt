@@ -36,6 +36,8 @@ import ro.fitnesshub.ui.settings.SettingsScreen
 import ro.fitnesshub.ui.workout.ActiveWorkoutScreen
 import ro.fitnesshub.ui.workout.ActiveWorkoutViewModel
 import ro.fitnesshub.ui.workout.ExerciseLibraryScreen
+import ro.fitnesshub.ui.workout.ExerciseProgressScreen
+import ro.fitnesshub.ui.workout.ExerciseProgressViewModel
 import ro.fitnesshub.ui.workout.TemplateEditorScreen
 import ro.fitnesshub.ui.workout.TemplateEditorViewModel
 import ro.fitnesshub.ui.workout.WorkoutHomeScreen
@@ -53,10 +55,12 @@ private object Routes {
     const val EXERCISES = "exercises?pick={pick}"
     const val TEMPLATE = "template/{${TemplateEditorViewModel.ARG_TEMPLATE_ID}}"
     const val SESSION = "session/{${ActiveWorkoutViewModel.ARG_SESSION_ID}}"
+    const val PROGRESS = "progress/{${ExerciseProgressViewModel.ARG_EXERCISE_ID}}"
 
     fun exercises(pick: Boolean) = "exercises?pick=$pick"
     fun template(id: Long) = "template/$id"
     fun session(id: Long) = "session/$id"
+    fun progress(exerciseId: Long) = "progress/$exerciseId"
 }
 
 /** Key used to hand a picked exercise back to the screen that opened the picker. */
@@ -65,7 +69,8 @@ private const val PICKED_EXERCISE = "picked_exercise_id"
 /** Which bottom tab a route belongs to, so the tab stays highlighted on nested screens. */
 private fun tabOf(route: String?): TopDestination? = when {
     route == null -> null
-    route.startsWith("exercises") || route.startsWith("template") || route.startsWith("session") -> TopDestination.Workout
+    route.startsWith("exercises") || route.startsWith("template") || route.startsWith("session") ||
+        route.startsWith("progress") -> TopDestination.Workout
     route == Routes.LOG || route == Routes.PRIVACY -> TopDestination.Settings
     else -> TopDestination.entries.firstOrNull { it.route == route }
 }
@@ -120,6 +125,7 @@ fun AppNavHost() {
                 ExerciseLibraryScreen(
                     pickMode = entry.arguments?.getBoolean("pick") ?: false,
                     onBack = { navController.popBackStack() },
+                    onOpenExercise = { navController.navigate(Routes.progress(it)) },
                     onPicked = { id ->
                         navController.previousBackStackEntry?.savedStateHandle?.set(PICKED_EXERCISE, id)
                         navController.popBackStack()
@@ -149,7 +155,18 @@ fun AppNavHost() {
                     pickedExerciseId = picked,
                     onPickedConsumed = { entry.savedStateHandle[PICKED_EXERCISE] = null },
                     onAddExercise = { navController.navigate(Routes.exercises(pick = true)) },
+                    onOpenExercise = { navController.navigate(Routes.progress(it)) },
                     onClose = { navController.popBackStackOnce(entry) },
+                )
+            }
+
+            composable(
+                Routes.PROGRESS,
+                arguments = listOf(navArgument(ExerciseProgressViewModel.ARG_EXERCISE_ID) { type = NavType.LongType }),
+            ) { entry ->
+                ExerciseProgressScreen(
+                    onBack = { navController.popBackStackOnce(entry) },
+                    onOpenSession = { navController.navigate(Routes.session(it)) },
                 )
             }
 

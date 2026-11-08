@@ -33,6 +33,9 @@ data class DailySummary(
     val sources: Set<String>,
 )
 
+/** Watch data for one gym session's time range. */
+data class WorkoutStats(val avgHr: Long?, val maxHr: Long?, val activeKcal: Double?)
+
 data class HeartRateSample(val time: Instant, val bpm: Long, val source: String)
 
 data class SleepSession(

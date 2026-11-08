@@ -10,12 +10,18 @@ object SetSuggestions {
     /**
      * What to pre-fill for the next set:
      * 1. the last working set logged in this session (keep going at the same weight), else
-     * 2. the first working set of the previous session with this exercise, else
-     * 3. nothing.
+     * 2. the progression [hint] for today, else
+     * 3. the first working set of the previous session with this exercise, else
+     * 4. nothing.
      */
-    fun next(current: List<SetEntryEntity>, previous: List<SetEntryEntity>): Suggestion? {
+    fun next(
+        current: List<SetEntryEntity>,
+        previous: List<SetEntryEntity>,
+        hint: Progression.Hint? = null,
+    ): Suggestion? {
         val lastWorking = current.lastOrNull { !it.isWarmup }
         if (lastWorking != null) return Suggestion(lastWorking.weightKg, lastWorking.reps)
+        if (hint != null) return Suggestion(hint.weightKg, hint.reps)
         val firstPrevious = previous.firstOrNull { !it.isWarmup } ?: return null
         return Suggestion(firstPrevious.weightKg, firstPrevious.reps)
     }
@@ -25,4 +31,7 @@ object SetSuggestions {
         sets.filter { !it.isWarmup }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(", ") { WorkoutFormat.formatSet(it.weightKg, it.reps) }
+
+    fun workingSets(sets: List<SetEntryEntity>): List<LiftSet> =
+        sets.filter { !it.isWarmup }.map { LiftSet(it.weightKg, it.reps) }
 }

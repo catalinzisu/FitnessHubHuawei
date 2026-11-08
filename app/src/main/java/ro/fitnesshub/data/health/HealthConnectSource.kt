@@ -2,6 +2,7 @@ package ro.fitnesshub.data.health
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
@@ -13,12 +14,14 @@ import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlin.reflect.KClass
 
 /**
@@ -38,6 +41,68 @@ class HealthConnectSource(private val context: Context) : HealthDataSource {
 
     suspend fun grantedPermissions(): Set<String> =
         client.permissionController.getGrantedPermissions()
+
+    /** Android 15+ / recent Health Connect versions let apps read while closed (WorkManager sync). */
+    fun backgroundReadSupported(): Boolean =
+        client.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) ==
+            HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+
+    suspend fun canReadInBackground(): Boolean =
+        backgroundReadSupported() && HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND in grantedPermissions()
+
+    /**
+     * Heart rate and active calories recorded by the watch during a gym session.
+     * Returns null when neither may be read.
+     */
+    suspend fun readWorkoutStats(from: Instant, to: Instant): WorkoutStats? {
+        val granted = grantedPermissions()
+        val metrics = buildSet<AggregateMetric<*>> {
+            if (HealthPermission.getReadPermission(HeartRateRecord::class) in granted) {
+                add(HeartRateRecord.BPM_AVG)
+                add(HeartRateRecord.BPM_MAX)
+            }
+            if (HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class) in granted) {
+                add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+            }
+        }
+        if (metrics.isEmpty()) return null
+        val result = client.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(from, to)))
+        return WorkoutStats(
+            avgHr = result[HeartRateRecord.BPM_AVG],
+            maxHr = result[HeartRateRecord.BPM_MAX],
+            activeKcal = result[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories,
+        )
+    }
+
+    suspend fun canWriteWorkouts(): Boolean =
+        HealthPermission.getWritePermission(ExerciseSessionRecord::class) in grantedPermissions()
+
+    /**
+     * Saves a finished gym session as a strength-training session, so other apps see it.
+     * The client id makes a second call update the same record instead of adding a copy.
+     */
+    suspend fun writeGymSession(sessionId: Long, title: String?, start: Instant, end: Instant) {
+        val rules = ZoneId.systemDefault().rules
+        client.insertRecords(
+            listOf(
+                ExerciseSessionRecord(
+                    startTime = start,
+                    startZoneOffset = rules.getOffset(start),
+                    endTime = end,
+                    endZoneOffset = rules.getOffset(end),
+                    metadata = Metadata.manualEntry(clientRecordId = gymClientId(sessionId), clientRecordVersion = end.toEpochMilli()),
+                    exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
+                    title = title,
+                ),
+            ),
+        )
+    }
+
+    suspend fun deleteGymSession(sessionId: Long) {
+        client.deleteRecords(ExerciseSessionRecord::class, emptyList(), listOf(gymClientId(sessionId)))
+    }
+
+    private fun gymClientId(sessionId: Long) = "fitnesshub-gym-$sessionId"
 
     override suspend fun readDailySummary(date: LocalDate): DailySummary? {
         val zone = ZoneId.systemDefault()

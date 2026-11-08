@@ -24,7 +24,10 @@ import ro.fitnesshub.data.GymRepository
 import ro.fitnesshub.data.db.SessionExerciseRow
 import ro.fitnesshub.data.db.SetEntryEntity
 import ro.fitnesshub.data.db.WorkoutSessionEntity
+import ro.fitnesshub.gym.LiftSet
+import ro.fitnesshub.gym.Progression
 import ro.fitnesshub.gym.RpeInput
+import ro.fitnesshub.gym.SetSuggestions
 import ro.fitnesshub.gym.WorkoutFormat
 import ro.fitnesshub.ui.common.UiMessage
 import ro.fitnesshub.util.Haptics
@@ -36,9 +39,21 @@ data class ExerciseBlock(
     val repsMin: Int,
     val repsMax: Int,
     val restSeconds: Int,
+    val equipment: String,
     val sets: List<SetEntryEntity>,
     /** Sets from the last finished session with this exercise; null while loading. */
     val previous: List<SetEntryEntity>?,
+    /** What to aim for today, from the last session; null without history. */
+    val hint: Progression.Hint?,
+    /** Ids of today's sets that were a personal record when logged. */
+    val prSetIds: Set<Long>,
+)
+
+/** What earlier workouts say about one exercise; loaded once per exercise. */
+private data class ExerciseHistory(
+    val previous: List<SetEntryEntity>,
+    /** Every earlier working set, for PR detection. */
+    val allWorking: List<LiftSet>,
 )
 
 data class RestTimerState(val remainingSeconds: Int, val totalSeconds: Int)
@@ -71,7 +86,7 @@ class ActiveWorkoutViewModel(
 
     private val sessionId: Long = savedStateHandle.get<Long>(ARG_SESSION_ID) ?: 0L
 
-    private val previous = MutableStateFlow<Map<Long, List<SetEntryEntity>>>(emptyMap())
+    private val history = MutableStateFlow<Map<Long, ExerciseHistory>>(emptyMap())
     private val rest = MutableStateFlow<RestTimerState?>(null)
     private val message = MutableStateFlow<UiMessage?>(null)
     private val closed = MutableStateFlow(false)
@@ -84,14 +99,14 @@ class ActiveWorkoutViewModel(
         repository.observeSession(sessionId),
         repository.observeSessionExercises(sessionId),
         repository.observeSets(sessionId),
-        previous,
+        history,
         extras,
-    ) { session, exercises, sets, previousSets, extra ->
+    ) { session, exercises, sets, histories, extra ->
         ActiveWorkoutUiState(
             loading = false,
             session = session,
             title = extra.title,
-            blocks = buildBlocks(exercises, sets, previousSets),
+            blocks = buildBlocks(exercises, sets, histories),
             rest = extra.rest,
             message = extra.message,
             // A deleted session also closes the screen.
@@ -103,15 +118,22 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             val session = repository.observeSession(sessionId).filterNotNull().first()
             title.value = repository.getTemplateName(session.templateId)
+            // A finished workout opened later may now have the watch data that wasn't synced yet.
+            if (session.endedAt != null) repository.attachWatchStats(session.id)
         }
-        // Load "last time" numbers for every exercise in the session, once each.
+        // Load "last time" numbers and earlier sets for every exercise in the session, once each.
         viewModelScope.launch {
             repository.observeSessionExercises(sessionId).collect { rows ->
                 rows.map { it.item.exerciseId }
-                    .filter { it !in previous.value }
+                    .filter { it !in history.value }
                     .forEach { exerciseId ->
-                        val sets = repository.previousSets(exerciseId, sessionId)
-                        previous.update { it + (exerciseId to sets) }
+                        val loaded = ExerciseHistory(
+                            previous = repository.previousSets(exerciseId, sessionId),
+                            allWorking = repository.exerciseHistory(exerciseId, sessionId)
+                                .filter { !it.isWarmup }
+                                .map { LiftSet(it.weightKg, it.reps) },
+                        )
+                        history.update { it + (exerciseId to loaded) }
                     }
             }
         }
@@ -120,10 +142,12 @@ class ActiveWorkoutViewModel(
     private fun buildBlocks(
         exercises: List<SessionExerciseRow>,
         sets: List<SetEntryEntity>,
-        previousSets: Map<Long, List<SetEntryEntity>>,
+        histories: Map<Long, ExerciseHistory>,
     ): List<ExerciseBlock> {
         val setsByExercise = sets.groupBy { it.exerciseId }
         return exercises.map { row ->
+            val exerciseSets = setsByExercise[row.item.exerciseId].orEmpty().sortedBy { it.setNumber }
+            val history = histories[row.item.exerciseId]
             ExerciseBlock(
                 exerciseId = row.item.exerciseId,
                 name = row.exerciseName,
@@ -131,10 +155,27 @@ class ActiveWorkoutViewModel(
                 repsMin = row.item.targetRepsMin,
                 repsMax = row.item.targetRepsMax,
                 restSeconds = row.item.restSeconds,
-                sets = setsByExercise[row.item.exerciseId].orEmpty().sortedBy { it.setNumber },
-                previous = previousSets[row.item.exerciseId],
+                equipment = row.equipment,
+                sets = exerciseSets,
+                previous = history?.previous,
+                hint = history?.let {
+                    Progression.hint(
+                        SetSuggestions.workingSets(it.previous),
+                        row.item.targetRepsMin,
+                        row.item.targetRepsMax,
+                        row.equipment,
+                    )
+                },
+                prSetIds = history?.let { prSetIds(exerciseSets, it.allWorking) }.orEmpty(),
             )
         }
+    }
+
+    private fun prSetIds(sets: List<SetEntryEntity>, earlier: List<LiftSet>): Set<Long> {
+        val working = sets.filter { !it.isWarmup }
+        return Progression.prIndices(working.map { LiftSet(it.weightKg, it.reps) }, earlier)
+            .map { working[it].id }
+            .toSet()
     }
 
     /** Validates the inputs and logs a set. Returns true if it was saved. */
@@ -151,12 +192,24 @@ class ActiveWorkoutViewModel(
         viewModelScope.launch {
             repository.logSet(sessionId, exerciseId, weight, reps, rpe, isWarmup)
         }
+        if (!isWarmup && isNewPr(exerciseId, LiftSet(weight, reps))) {
+            message.value = UiMessage(R.string.session_new_pr)
+        }
         if (!isWarmup) {
             val restSeconds = state.value.blocks.firstOrNull { it.exerciseId == exerciseId }?.restSeconds
                 ?: GymRepository.DEFAULT_REST_SECONDS
             startRest(restSeconds)
         }
         return true
+    }
+
+    private fun isNewPr(exerciseId: Long, set: LiftSet): Boolean {
+        val earlier = history.value[exerciseId]?.allWorking ?: return false
+        val today = state.value.blocks.firstOrNull { it.exerciseId == exerciseId }
+            ?.let { SetSuggestions.workingSets(it.sets) }
+            .orEmpty()
+        val all = today + set
+        return all.lastIndex in Progression.prIndices(all, earlier)
     }
 
     private fun fail(text: Int): Boolean {

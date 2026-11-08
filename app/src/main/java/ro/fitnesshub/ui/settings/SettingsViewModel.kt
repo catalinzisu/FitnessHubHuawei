@@ -14,22 +14,56 @@ import kotlinx.coroutines.launch
 import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.R
 import ro.fitnesshub.data.HealthRepository
+import ro.fitnesshub.data.health.HealthConnectSource
+import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.data.health.SeedDataWriter
 import ro.fitnesshub.ui.common.UiMessage
 import ro.fitnesshub.util.AppLog
 
+/** State of an optional Health Connect permission. */
+enum class OptionalAccess { Unknown, Unsupported, Off, On }
+
 data class SettingsUiState(
     val working: Boolean = false,
     val message: UiMessage? = null,
+    val backgroundSync: OptionalAccess = OptionalAccess.Unknown,
+    val workoutExport: OptionalAccess = OptionalAccess.Unknown,
 )
 
 class SettingsViewModel(
     private val seedDataWriter: SeedDataWriter,
     private val repository: HealthRepository,
+    private val healthConnect: HealthConnectSource,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
+
+    /** Re-reads the optional permissions; called on every resume. */
+    fun refresh() {
+        viewModelScope.launch {
+            val (background, export) = try {
+                if (!healthConnect.isAvailable()) {
+                    OptionalAccess.Unsupported to OptionalAccess.Unsupported
+                } else {
+                    val granted = healthConnect.grantedPermissions()
+                    val background = when {
+                        !healthConnect.backgroundReadSupported() -> OptionalAccess.Unsupported
+                        HealthPermissions.BACKGROUND in granted -> OptionalAccess.On
+                        else -> OptionalAccess.Off
+                    }
+                    val export = if (HealthPermissions.WRITE_WORKOUTS in granted) OptionalAccess.On else OptionalAccess.Off
+                    background to export
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                AppLog.e(TAG, "Could not read permissions", e)
+                OptionalAccess.Unknown to OptionalAccess.Unknown
+            }
+            _state.update { it.copy(backgroundSync = background, workoutExport = export) }
+        }
+    }
 
     fun seedTestData() = runTool {
         if (!seedDataWriter.hasWritePermissions()) {
@@ -75,7 +109,11 @@ class SettingsViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp
-                SettingsViewModel(app.container.seedDataWriter, app.container.healthRepository)
+                SettingsViewModel(
+                    app.container.seedDataWriter,
+                    app.container.healthRepository,
+                    app.container.healthConnect,
+                )
             }
         }
     }

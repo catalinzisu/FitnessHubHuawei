@@ -231,9 +231,11 @@ fun WorkoutHomeScreen(
                     headlineContent = { Text(session.templateName ?: stringResource(R.string.workout_free)) },
                     overlineContent = { Text("$date · $duration") },
                     supportingContent = {
+                        val watch = session.avgHr?.let { " · " + stringResource(R.string.session_watch_avg_hr, it) }.orEmpty()
                         Text(
                             pluralStringResource(R.plurals.exercise_count, session.exerciseCount, session.exerciseCount) +
-                                " · " + pluralStringResource(R.plurals.working_set_count, session.workingSets, session.workingSets),
+                                " · " + pluralStringResource(R.plurals.working_set_count, session.workingSets, session.workingSets) +
+                                watch,
                         )
                     },
                     modifier = Modifier.clickable { onOpenSession(session.id) },

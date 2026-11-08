@@ -11,6 +11,8 @@ import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.db.AppDatabase
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.SeedDataWriter
+import ro.fitnesshub.sync.HealthSync
+import ro.fitnesshub.sync.SyncWorker
 import ro.fitnesshub.util.AppLog
 import ro.fitnesshub.util.Haptics
 
@@ -24,6 +26,7 @@ class FitnessHubApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        SyncWorker.schedule(this)
         appScope.launch {
             try {
                 container.gymRepository.ensureExerciseLibrary()
@@ -43,7 +46,8 @@ class AppContainer(context: Context) {
     val healthRepository: HealthRepository by lazy {
         HealthRepository(healthConnect, database.dailySummaryDao())
     }
-    val gymRepository: GymRepository by lazy { GymRepository(database.gymDao(), appContext) }
+    val gymRepository: GymRepository by lazy { GymRepository(database.gymDao(), appContext, healthConnect) }
+    val healthSync: HealthSync by lazy { HealthSync(healthRepository, gymRepository) }
     val seedDataWriter: SeedDataWriter by lazy { SeedDataWriter(appContext) }
     val haptics: Haptics by lazy { Haptics(appContext) }
 }

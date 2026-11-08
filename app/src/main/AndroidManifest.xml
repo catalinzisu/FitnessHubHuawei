@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <!-- Lets the periodic sync run while the app is closed (Health Connect asks the user). -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
+    <!-- Finished gym sessions are saved to Health Connect. -->
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
 
     <!-- Rest timer buzz. -->
     <uses-permission android:name="android.permission.VIBRATE" />

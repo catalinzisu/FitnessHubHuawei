@@ -35,7 +35,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ro.fitnesshub.R
 import ro.fitnesshub.data.db.DailySummaryEntity
 import ro.fitnesshub.data.health.HealthConnectSource
-import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.ui.common.HealthConnectIntents
 import ro.fitnesshub.ui.common.InfoCard
 import java.text.NumberFormat
@@ -111,7 +110,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel(factory = Dashboar
                                     title = stringResource(R.string.permissions_title),
                                     body = stringResource(R.string.permissions_body),
                                     primaryLabel = stringResource(R.string.permissions_grant),
-                                    onPrimary = { permissionLauncher.launch(HealthPermissions.requested) },
+                                    onPrimary = { permissionLauncher.launch(state.permissionsToRequest) },
                                 )
                             }
                             PermissionState.Partial -> item {
@@ -119,7 +118,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = viewModel(factory = Dashboar
                                     title = stringResource(R.string.permissions_title),
                                     body = stringResource(R.string.permissions_partial),
                                     primaryLabel = stringResource(R.string.permissions_grant),
-                                    onPrimary = { permissionLauncher.launch(HealthPermissions.requested) },
+                                    onPrimary = { permissionLauncher.launch(state.permissionsToRequest) },
                                     secondaryLabel = stringResource(R.string.permissions_manage),
                                     onSecondary = { HealthConnectIntents.openSettings(context) },
                                 )

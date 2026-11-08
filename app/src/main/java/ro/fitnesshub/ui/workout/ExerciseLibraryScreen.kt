@@ -103,6 +103,7 @@ fun ExerciseLibraryScreen(
     pickMode: Boolean,
     onBack: () -> Unit,
     onPicked: (Long) -> Unit,
+    onOpenExercise: (Long) -> Unit,
     viewModel: ExerciseLibraryViewModel = viewModel(factory = ExerciseLibraryViewModel.Factory),
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -169,7 +170,7 @@ fun ExerciseLibraryScreen(
                         } else {
                             null
                         },
-                        modifier = if (pickMode) Modifier.clickable { onPicked(exercise.id) } else Modifier,
+                        modifier = Modifier.clickable { if (pickMode) onPicked(exercise.id) else onOpenExercise(exercise.id) },
                     )
                 }
             }

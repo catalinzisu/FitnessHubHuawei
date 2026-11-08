@@ -1,9 +1,11 @@
 package ro.fitnesshub.ui.workout
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -55,11 +58,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import ro.fitnesshub.R
 import ro.fitnesshub.data.db.SetEntryEntity
+import ro.fitnesshub.data.db.WorkoutSessionEntity
+import ro.fitnesshub.gym.Progression
 import ro.fitnesshub.gym.SetSuggestions
 import ro.fitnesshub.gym.WorkoutFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 private enum class ConfirmAction { Finish, Discard }
 
@@ -69,6 +75,7 @@ fun ActiveWorkoutScreen(
     pickedExerciseId: Long?,
     onPickedConsumed: () -> Unit,
     onAddExercise: () -> Unit,
+    onOpenExercise: (Long) -> Unit,
     onClose: () -> Unit,
     viewModel: ActiveWorkoutViewModel = viewModel(factory = ActiveWorkoutViewModel.Factory),
 ) {
@@ -165,10 +172,14 @@ fun ActiveWorkoutScreen(
             if (state.blocks.isEmpty() && !state.loading && !readOnly) {
                 item { Text(stringResource(R.string.session_empty)) }
             }
+            if (readOnly && session != null) {
+                item { WatchStatsCard(session) }
+            }
             items(state.blocks, key = { it.exerciseId }) { block ->
                 ExerciseCard(
                     block = block,
                     readOnly = readOnly,
+                    onOpenProgress = { onOpenExercise(block.exerciseId) },
                     onLog = { weight, reps, rpe, warmup -> viewModel.logSet(block.exerciseId, weight, reps, rpe, warmup) },
                     onDeleteSet = viewModel::deleteSet,
                     onRemove = { viewModel.removeExercise(block.exerciseId) },
@@ -209,10 +220,33 @@ fun ActiveWorkoutScreen(
     }
 }
 
+/** Heart rate and calories from the watch, for a finished workout. */
+@Composable
+private fun WatchStatsCard(session: WorkoutSessionEntity) {
+    val parts = buildList {
+        session.avgHr?.let { add(stringResource(R.string.session_watch_avg_hr, it)) }
+        session.maxHr?.let { add(stringResource(R.string.session_watch_max_hr, it)) }
+        session.kcal?.let { add(stringResource(R.string.session_watch_kcal, it.roundToInt())) }
+    }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(stringResource(R.string.session_watch_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                if (parts.isEmpty()) stringResource(R.string.session_watch_none) else parts.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
 @Composable
 private fun ExerciseCard(
     block: ExerciseBlock,
     readOnly: Boolean,
+    onOpenProgress: () -> Unit,
     onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Boolean,
     onDeleteSet: (Long) -> Unit,
     onRemove: () -> Unit,
@@ -220,7 +254,7 @@ private fun ExerciseCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f).clickable(onClick = onOpenProgress)) {
                     Text(block.name, style = MaterialTheme.typography.titleMedium)
                     if (!readOnly) {
                         Text(
@@ -249,8 +283,17 @@ private fun ExerciseCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (!readOnly && block.hint != null) {
+                Text(
+                    hintText(block.hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
-            block.sets.forEach { set -> SetRow(set, readOnly, onDelete = { onDeleteSet(set.id) }) }
+            block.sets.forEach { set ->
+                SetRow(set, readOnly, isPr = set.id in block.prSetIds, onDelete = { onDeleteSet(set.id) })
+            }
 
             if (!readOnly) {
                 SetInput(block, onLog)
@@ -260,7 +303,17 @@ private fun ExerciseCard(
 }
 
 @Composable
-private fun SetRow(set: SetEntryEntity, readOnly: Boolean, onDelete: () -> Unit) {
+private fun hintText(hint: Progression.Hint): String {
+    val weight = WorkoutFormat.formatWeight(hint.weightKg)
+    return when (hint) {
+        is Progression.Hint.AddWeight -> stringResource(R.string.session_hint_add_weight, weight, hint.reps)
+        is Progression.Hint.AddReps -> stringResource(R.string.session_hint_add_reps, weight, hint.reps)
+        is Progression.Hint.Repeat -> stringResource(R.string.session_hint_repeat, weight, hint.reps)
+    }
+}
+
+@Composable
+private fun SetRow(set: SetEntryEntity, readOnly: Boolean, isPr: Boolean, onDelete: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             if (set.isWarmup) stringResource(R.string.session_set_warmup) else set.setNumber.toString(),
@@ -268,7 +321,22 @@ private fun SetRow(set: SetEntryEntity, readOnly: Boolean, onDelete: () -> Unit)
             color = if (set.isWarmup) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
             modifier = Modifier.width(28.dp),
         )
-        Text(WorkoutFormat.formatSet(set.weightKg, set.reps), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(WorkoutFormat.formatSet(set.weightKg, set.reps), style = MaterialTheme.typography.bodyLarge)
+        if (isPr) {
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.session_pr_badge),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                )
+            }
+        }
+        Spacer(Modifier.weight(1f))
         set.rpe?.let {
             Text(stringResource(R.string.session_set_rpe, WorkoutFormat.formatWeight(it)), style = MaterialTheme.typography.bodySmall)
         }
@@ -287,7 +355,7 @@ private fun SetInput(
 ) {
     // Reset to a fresh suggestion after every logged set and once "last time" has loaded.
     val keys = arrayOf<Any>(block.exerciseId, block.sets.size, block.previous == null)
-    val suggestion = SetSuggestions.next(block.sets, block.previous.orEmpty())
+    val suggestion = SetSuggestions.next(block.sets, block.previous.orEmpty(), block.hint)
     var weight by rememberSaveable(*keys) { mutableStateOf(suggestion?.let { WorkoutFormat.formatWeight(it.weightKg) }.orEmpty()) }
     var reps by rememberSaveable(*keys) { mutableStateOf(suggestion?.reps?.toString().orEmpty()) }
     var rpe by rememberSaveable(*keys) { mutableStateOf("") }
