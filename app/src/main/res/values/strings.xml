@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fitness Hub</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_data">—</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_today">Today</string>
+    <string name="nav_workout">Workout</string>
+    <string name="nav_coach">Coach</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Health Connect status -->
+    <string name="hc_checking">Checking Health Connect…</string>
+    <string name="hc_not_installed_title">Health Connect is missing</string>
+    <string name="hc_not_installed_body">Fitness Hub reads your watch data through Health Connect. Install it from Google Play, then come back.</string>
+    <string name="hc_install">Install Health Connect</string>
+    <string name="hc_update_title">Health Connect needs an update</string>
+    <string name="hc_update_body">Update Health Connect from Google Play, then come back.</string>
+    <string name="hc_update">Update Health Connect</string>
+
+    <!-- Permissions -->
+    <string name="permissions_title">Connect your health data</string>
+    <string name="permissions_body">Fitness Hub reads steps, heart rate, sleep and calories from Health Connect. Your watch data gets there through Gadgetbridge. Everything stays on this phone.</string>
+    <string name="permissions_grant">Grant access</string>
+    <string name="permissions_partial">Some data types are not allowed, so their cards stay empty.</string>
+    <string name="permissions_manage">Manage in Health Connect</string>
+
+    <!-- Dashboard -->
+    <string name="metric_steps">Steps</string>
+    <string name="metric_distance">Distance</string>
+    <string name="metric_active_kcal">Active calories</string>
+    <string name="metric_total_kcal">Total calories</string>
+    <string name="metric_heart_rate">Heart rate (avg)</string>
+    <string name="metric_hr_range">Heart rate range</string>
+    <string name="metric_resting_hr">Resting heart rate</string>
+    <string name="metric_sleep">Last night\'s sleep</string>
+    <string name="value_km">%1$.2f km</string>
+    <string name="value_kcal">%1$d kcal</string>
+    <string name="value_bpm">%1$d bpm</string>
+    <string name="value_bpm_range">%1$d–%2$d bpm</string>
+    <string name="value_sleep">%1$d h %2$02d min</string>
+    <string name="last_synced">Last synced %1$s · from %2$s</string>
+    <string name="never_synced">Not synced yet. Pull down to refresh.</string>
+    <string name="sources_none">no source</string>
+    <string name="sync_error">Sync failed. Details are in Settings → Debug log.</string>
+
+    <!-- Placeholders -->
+    <string name="coming_soon_workout">The gym logger arrives in week 3: custom training days, sets × reps × weight, rest timer.</string>
+    <string name="coming_soon_coach">The AI coach arrives in week 5: a local plateau detector plus plain-language explanations.</string>
+
+    <!-- Settings -->
+    <string name="settings_hc">Health Connect permissions</string>
+    <string name="settings_hc_desc">See or change what Fitness Hub can read.</string>
+    <string name="settings_privacy">Privacy policy</string>
+    <string name="settings_privacy_desc">What the app reads, stores and sends.</string>
+    <string name="settings_log">Debug log</string>
+    <string name="settings_log_desc">Last 200 sync events and errors.</string>
+    <string name="settings_debug_section">Developer tools (debug build only)</string>
+    <string name="seed_title">Seed test data</string>
+    <string name="seed_desc">Writes 21 days of fake steps, heart rate, sleep and calories into Health Connect. Meant for the emulator.</string>
+    <string name="seed_confirm_title">Write fake data?</string>
+    <string name="seed_confirm_body">The fake records mix with your real watch data in Health Connect. Use this on the emulator. You can remove them with “Delete test data”.</string>
+    <string name="seed_confirm_ok">Write test data</string>
+    <string name="seed_clear">Delete test data</string>
+    <string name="seed_clear_desc">Removes only records this app wrote. Watch data is untouched.</string>
+    <string name="seed_done">Wrote %1$d test records.</string>
+    <string name="seed_cleared">Test data deleted.</string>
+    <string name="seed_missing_permission">Allow the write permissions first: open Today and tap “Grant access”.</string>
+    <string name="seed_failed">Could not write test data. Details are in the debug log.</string>
+    <string name="seed_working">Working…</string>
+
+    <!-- Log -->
+    <string name="log_title">Debug log</string>
+    <string name="log_empty">No events yet.</string>
+    <string name="log_clear">Clear</string>
+    <string name="log_note">Only counts and statuses are logged, never health values.</string>
+
+    <!-- Privacy -->
+    <string name="privacy_title">Privacy policy</string>
+    <string name="privacy_body">Fitness Hub is a student project. It is not a medical device and does not give medical advice.\n\nWhat it reads: steps, distance, calories, heart rate, resting heart rate, sleep, workouts, SpO2 and weight from Health Connect, only for the types you allow. You can change this any time in Health Connect.\n\nWhere data is stored: only on this phone, in the app\'s private database. There is no account and no server. Cloud backup of the database is turned off.\n\nWhat leaves the phone: nothing in this version. A later version adds an optional AI coach. It is off by default and, when you turn it on, sends only a short, anonymous summary with rounded numbers, which you can preview before each request.\n\nYour control: you can revoke Health Connect access at any time. Uninstalling the app deletes all of its data.</string>
+</resources>

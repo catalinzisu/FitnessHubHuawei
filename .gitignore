@@ -1,0 +1,27 @@
+# Gradle / Android Studio
+.gradle/
+build/
+/captures
+.externalNativeBuild/
+.cxx/
+.kotlin/
+local.properties
+*.iml
+.idea/
+.DS_Store
+
+# Signing keys and secrets: never commit
+*.jks
+*.keystore
+google-services.json
+*.env
+
+# Personal health data exports (Huawei Health, Gadgetbridge backups)
+huawei-export/
+*.zip
+*.db
+*.sqlite
+
+# Logs and recordings
+*.log
+*.mp4
