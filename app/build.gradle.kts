@@ -78,4 +78,5 @@ dependencies {
     implementation(libs.androidx.health.connect)
 
     testImplementation(libs.junit)
+    testImplementation(libs.org.json)
 }

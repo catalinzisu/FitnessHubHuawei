@@ -1,35 +1,32 @@
 package ro.fitnesshub.data.db
 
-import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
-import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 
-// Gym logger tables (plan section 6). The screens that use them come in week 3.
+// Gym logger tables (plan section 6).
 
-@Entity(tableName = "exercise")
+@Entity(tableName = "exercise", indices = [Index(value = ["name"], unique = true)])
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     /** "compound" or "isolation". */
     val type: String,
+    /** chest / back / shoulders / biceps / triceps / quads / hamstrings / glutes / calves / core. */
     val primaryMuscle: String,
     /** barbell / dumbbell / machine / cable / bodyweight. */
     val equipment: String,
     val isCustom: Boolean = false,
 )
 
+/** A custom training day, e.g. "Push A" on Monday and Thursday. */
 @Entity(tableName = "workout_template")
 data class WorkoutTemplateEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    /** e.g. "Push A". */
     val name: String,
-    /** Comma-separated ISO weekdays, e.g. "MONDAY,THURSDAY". */
+    /** Comma-separated java.time.DayOfWeek names, e.g. "MONDAY,THURSDAY". */
     val weekdays: String,
     val notes: String? = null,
 )
@@ -56,7 +53,7 @@ data class WorkoutTemplateEntity(
 data class TemplateExerciseEntity(
     val templateId: Long,
     val exerciseId: Long,
-    /** Position of the exercise inside the day ("order" is an SQL keyword). */
+    /** Position inside the day ("order" is an SQL keyword). */
     val position: Int,
     val targetSets: Int,
     val targetRepsMin: Int,
@@ -74,19 +71,50 @@ data class TemplateExerciseEntity(
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("templateId")],
+    indices = [Index("templateId"), Index("startedAt")],
 )
 data class WorkoutSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val templateId: Long?,
     /** Epoch millis. */
-    val start: Long,
-    val end: Long?,
+    val startedAt: Long,
+    /** Epoch millis; null while the workout is in progress. */
+    val endedAt: Long? = null,
     val notes: String? = null,
-    /** Filled from Health Connect after the session ends. */
+    /** Filled from Health Connect after the session ends (week 4). */
     val avgHr: Long? = null,
     val maxHr: Long? = null,
     val kcal: Double? = null,
+)
+
+/** The exercises of one session, copied from the template when it starts, plus any added on the fly. */
+@Entity(
+    tableName = "session_exercise",
+    primaryKeys = ["sessionId", "exerciseId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = WorkoutSessionEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["sessionId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = ExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["exerciseId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("exerciseId")],
+)
+data class SessionExerciseEntity(
+    val sessionId: Long,
+    val exerciseId: Long,
+    val position: Int,
+    val targetSets: Int,
+    val targetRepsMin: Int,
+    val targetRepsMax: Int,
+    val restSeconds: Int,
 )
 
 @Entity(
@@ -120,14 +148,28 @@ data class SetEntryEntity(
     val completedAt: Long,
 )
 
-@Dao
-interface GymDao {
-    @Query("SELECT * FROM exercise ORDER BY name")
-    fun observeExercises(): Flow<List<ExerciseEntity>>
+// ---- Query results ----
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertExercises(exercises: List<ExerciseEntity>)
+data class TemplateSummary(
+    @Embedded val template: WorkoutTemplateEntity,
+    val exerciseCount: Int,
+)
 
-    @Query("SELECT * FROM workout_template ORDER BY name")
-    fun observeTemplates(): Flow<List<WorkoutTemplateEntity>>
-}
+data class TemplateExerciseRow(
+    @Embedded val item: TemplateExerciseEntity,
+    val exerciseName: String,
+)
+
+data class SessionExerciseRow(
+    @Embedded val item: SessionExerciseEntity,
+    val exerciseName: String,
+)
+
+data class SessionSummary(
+    val id: Long,
+    val startedAt: Long,
+    val endedAt: Long?,
+    val templateName: String?,
+    val workingSets: Int,
+    val exerciseCount: Int,
+)

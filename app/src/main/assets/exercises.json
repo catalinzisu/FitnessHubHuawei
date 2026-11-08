@@ -1,0 +1,58 @@
+[
+  { "name": "Barbell Bench Press", "type": "compound", "muscle": "chest", "equipment": "barbell" },
+  { "name": "Incline Barbell Bench Press", "type": "compound", "muscle": "chest", "equipment": "barbell" },
+  { "name": "Dumbbell Bench Press", "type": "compound", "muscle": "chest", "equipment": "dumbbell" },
+  { "name": "Incline Dumbbell Press", "type": "compound", "muscle": "chest", "equipment": "dumbbell" },
+  { "name": "Machine Chest Press", "type": "compound", "muscle": "chest", "equipment": "machine" },
+  { "name": "Cable Fly", "type": "isolation", "muscle": "chest", "equipment": "cable" },
+  { "name": "Pec Deck", "type": "isolation", "muscle": "chest", "equipment": "machine" },
+  { "name": "Push-up", "type": "compound", "muscle": "chest", "equipment": "bodyweight" },
+
+  { "name": "Deadlift", "type": "compound", "muscle": "back", "equipment": "barbell" },
+  { "name": "Barbell Row", "type": "compound", "muscle": "back", "equipment": "barbell" },
+  { "name": "One-Arm Dumbbell Row", "type": "compound", "muscle": "back", "equipment": "dumbbell" },
+  { "name": "Pull-up", "type": "compound", "muscle": "back", "equipment": "bodyweight" },
+  { "name": "Chin-up", "type": "compound", "muscle": "back", "equipment": "bodyweight" },
+  { "name": "Lat Pulldown", "type": "compound", "muscle": "back", "equipment": "cable" },
+  { "name": "Seated Cable Row", "type": "compound", "muscle": "back", "equipment": "cable" },
+  { "name": "Chest-Supported T-Bar Row", "type": "compound", "muscle": "back", "equipment": "machine" },
+
+  { "name": "Overhead Press", "type": "compound", "muscle": "shoulders", "equipment": "barbell" },
+  { "name": "Seated Dumbbell Shoulder Press", "type": "compound", "muscle": "shoulders", "equipment": "dumbbell" },
+  { "name": "Dumbbell Lateral Raise", "type": "isolation", "muscle": "shoulders", "equipment": "dumbbell" },
+  { "name": "Cable Lateral Raise", "type": "isolation", "muscle": "shoulders", "equipment": "cable" },
+  { "name": "Rear Delt Fly", "type": "isolation", "muscle": "shoulders", "equipment": "dumbbell" },
+  { "name": "Face Pull", "type": "isolation", "muscle": "shoulders", "equipment": "cable" },
+
+  { "name": "Barbell Curl", "type": "isolation", "muscle": "biceps", "equipment": "barbell" },
+  { "name": "Dumbbell Curl", "type": "isolation", "muscle": "biceps", "equipment": "dumbbell" },
+  { "name": "Hammer Curl", "type": "isolation", "muscle": "biceps", "equipment": "dumbbell" },
+  { "name": "Preacher Curl", "type": "isolation", "muscle": "biceps", "equipment": "machine" },
+  { "name": "Cable Curl", "type": "isolation", "muscle": "biceps", "equipment": "cable" },
+
+  { "name": "Triceps Pushdown", "type": "isolation", "muscle": "triceps", "equipment": "cable" },
+  { "name": "Overhead Cable Triceps Extension", "type": "isolation", "muscle": "triceps", "equipment": "cable" },
+  { "name": "Skull Crusher", "type": "isolation", "muscle": "triceps", "equipment": "barbell" },
+  { "name": "Close-Grip Bench Press", "type": "compound", "muscle": "triceps", "equipment": "barbell" },
+  { "name": "Dips", "type": "compound", "muscle": "triceps", "equipment": "bodyweight" },
+
+  { "name": "Back Squat", "type": "compound", "muscle": "quads", "equipment": "barbell" },
+  { "name": "Front Squat", "type": "compound", "muscle": "quads", "equipment": "barbell" },
+  { "name": "Leg Press", "type": "compound", "muscle": "quads", "equipment": "machine" },
+  { "name": "Hack Squat", "type": "compound", "muscle": "quads", "equipment": "machine" },
+  { "name": "Bulgarian Split Squat", "type": "compound", "muscle": "quads", "equipment": "dumbbell" },
+  { "name": "Leg Extension", "type": "isolation", "muscle": "quads", "equipment": "machine" },
+
+  { "name": "Romanian Deadlift", "type": "compound", "muscle": "hamstrings", "equipment": "barbell" },
+  { "name": "Lying Leg Curl", "type": "isolation", "muscle": "hamstrings", "equipment": "machine" },
+  { "name": "Seated Leg Curl", "type": "isolation", "muscle": "hamstrings", "equipment": "machine" },
+
+  { "name": "Barbell Hip Thrust", "type": "compound", "muscle": "glutes", "equipment": "barbell" },
+  { "name": "Cable Glute Kickback", "type": "isolation", "muscle": "glutes", "equipment": "cable" },
+
+  { "name": "Standing Calf Raise", "type": "isolation", "muscle": "calves", "equipment": "machine" },
+  { "name": "Seated Calf Raise", "type": "isolation", "muscle": "calves", "equipment": "machine" },
+
+  { "name": "Hanging Leg Raise", "type": "isolation", "muscle": "core", "equipment": "bodyweight" },
+  { "name": "Cable Crunch", "type": "isolation", "muscle": "core", "equipment": "cable" }
+]

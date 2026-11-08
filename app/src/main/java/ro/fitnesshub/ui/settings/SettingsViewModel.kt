@@ -1,6 +1,5 @@
 package ro.fitnesshub.ui.settings
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -16,9 +15,8 @@ import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.R
 import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.health.SeedDataWriter
+import ro.fitnesshub.ui.common.UiMessage
 import ro.fitnesshub.util.AppLog
-
-data class UiMessage(@param:StringRes val text: Int, val args: List<Any> = emptyList())
 
 data class SettingsUiState(
     val working: Boolean = false,

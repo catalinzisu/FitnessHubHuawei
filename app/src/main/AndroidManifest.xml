@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
 
+    <!-- Rest timer buzz. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Android 13 and lower: Health Connect is a separate app we need to see. -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />

@@ -47,8 +47,96 @@
     <string name="sources_none">no source</string>
     <string name="sync_error">Sync failed. Details are in Settings → Debug log.</string>
 
+    <!-- Workout home -->
+    <string name="workout_in_progress">Workout in progress</string>
+    <string name="workout_started_at">Started at %1$s · %2$s</string>
+    <string name="workout_resume">Resume</string>
+    <string name="workout_today">Today · %1$s</string>
+    <string name="workout_rest_day">Rest day: no training day is planned for today.</string>
+    <string name="workout_start">Start</string>
+    <string name="workout_start_empty">Start empty workout</string>
+    <string name="workout_training_days">Training days</string>
+    <string name="workout_new_day">New day</string>
+    <string name="workout_no_days">Create your first training day, e.g. “Push A” on Monday and Thursday.</string>
+    <string name="workout_no_weekdays">No fixed weekday</string>
+    <string name="workout_recent">Recent workouts</string>
+    <string name="workout_no_recent">Finished workouts will show up here.</string>
+    <string name="workout_free">Free workout</string>
+    <string name="workout_exercise_library">Exercises</string>
+    <plurals name="exercise_count">
+        <item quantity="one">%d exercise</item>
+        <item quantity="other">%d exercises</item>
+    </plurals>
+    <plurals name="working_set_count">
+        <item quantity="one">%d working set</item>
+        <item quantity="other">%d working sets</item>
+    </plurals>
+
+    <!-- Exercise library -->
+    <string name="exercises_title">Exercises</string>
+    <string name="exercises_pick_title">Add an exercise</string>
+    <string name="exercises_search">Search</string>
+    <string name="exercises_custom">Custom</string>
+    <string name="exercises_none_found">No exercise matches your search.</string>
+    <string name="exercises_add_custom">New exercise</string>
+    <string name="exercises_name">Name</string>
+    <string name="exercises_muscle">Main muscle</string>
+    <string name="exercises_equipment">Equipment</string>
+    <string name="exercises_type">Type</string>
+    <string name="exercises_save">Save</string>
+    <string name="exercises_name_required">Enter a name.</string>
+    <string name="exercises_duplicate">An exercise with this name already exists.</string>
+
+    <!-- Template editor -->
+    <string name="template_new">New training day</string>
+    <string name="template_edit">Edit training day</string>
+    <string name="template_name">Name (e.g. Push A)</string>
+    <string name="template_weekdays">Days of the week</string>
+    <string name="template_exercises">Exercises</string>
+    <string name="template_no_exercises">No exercises yet.</string>
+    <string name="template_add_exercise">Add exercise</string>
+    <string name="template_sets">Sets</string>
+    <string name="template_reps_min">Reps min</string>
+    <string name="template_reps_max">Reps max</string>
+    <string name="template_rest">Rest</string>
+    <string name="template_save">Save</string>
+    <string name="template_delete">Delete training day</string>
+    <string name="template_delete_confirm">Delete this training day? Past workouts stay in your history.</string>
+    <string name="template_name_required">Give the training day a name.</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
+    <string name="remove">Remove</string>
+    <string name="delete">Delete</string>
+
+    <!-- Active workout -->
+    <string name="session_title_free">Workout</string>
+    <string name="session_finish">Finish</string>
+    <string name="session_discard">Discard workout</string>
+    <string name="session_discard_confirm">Discard this workout and all its sets?</string>
+    <string name="session_delete">Delete workout</string>
+    <string name="session_delete_confirm">Delete this workout from your history?</string>
+    <string name="session_finish_confirm">Finish the workout? Exercises without sets are not saved in the history.</string>
+    <string name="session_target">%1$d × %2$s · rest %3$s</string>
+    <string name="session_last_time">Last time: %1$s</string>
+    <string name="session_first_time">First time with this exercise.</string>
+    <string name="session_weight">kg</string>
+    <string name="session_reps">Reps</string>
+    <string name="session_rpe">RPE</string>
+    <string name="session_warmup">Warm-up</string>
+    <string name="session_log_set">Log set</string>
+    <string name="session_add_exercise">Add exercise</string>
+    <string name="session_empty">Add the exercises you are doing.</string>
+    <string name="session_finished_on">%1$s · %2$s</string>
+    <string name="session_set_rpe">RPE %1$s</string>
+    <string name="session_set_warmup">W</string>
+    <string name="session_invalid_weight">Enter a weight between 0 and 1000 kg.</string>
+    <string name="session_invalid_reps">Enter reps between 1 and 100.</string>
+    <string name="session_invalid_rpe">RPE must be between 1 and 10, in steps of 0.5.</string>
+    <string name="rest_label">Rest %1$s</string>
+    <string name="rest_add">+15 s</string>
+    <string name="rest_skip">Skip</string>
+
     <!-- Placeholders -->
-    <string name="coming_soon_workout">The gym logger arrives in week 3: custom training days, sets × reps × weight, rest timer.</string>
     <string name="coming_soon_coach">The AI coach arrives in week 5: a local plateau detector plus plain-language explanations.</string>
 
     <!-- Settings -->

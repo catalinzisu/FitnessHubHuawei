@@ -12,9 +12,10 @@ import androidx.room.RoomDatabase
         WorkoutTemplateEntity::class,
         TemplateExerciseEntity::class,
         WorkoutSessionEntity::class,
+        SessionExerciseEntity::class,
         SetEntryEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,8 +25,8 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "fitness_hub.db")
-                // While developing: a schema change wipes the local cache instead of crashing.
-                // Replace with real migrations before anyone depends on stored gym logs.
+                // While developing: a schema change wipes the local data instead of crashing.
+                // Replace with real migrations before logging gym sessions you want to keep.
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
     }
