@@ -17,20 +17,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # Provides Gradle 8.14.3 until the wrapper (gradlew) is committed.
+      # Caches Gradle; the version comes from the committed wrapper (gradlew).
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.14.3"
 
       # Week 5: add the google-services.json step from the plan (section 3B) here.
 
       - name: Build
-        run: |
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew && ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+        run: chmod +x ./gradlew && ./gradlew testDebugUnitTest assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:

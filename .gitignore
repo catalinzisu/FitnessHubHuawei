@@ -25,3 +25,6 @@ huawei-export/
 # Logs and recordings
 *.log
 *.mp4
+
+# Huawei Health export (personal data, never commit)
+data/

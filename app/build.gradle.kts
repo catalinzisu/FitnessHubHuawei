@@ -1,15 +1,12 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "ro.fitnesshub"
-    compileSdk = 36
+    compileSdk = 37
     // Match the build-tools already installed, so Gradle doesn't try to download 35.0.0.
     buildToolsVersion = "36.0.0"
 
@@ -17,7 +14,7 @@ android {
         applicationId = "ro.fitnesshub"
         // Health Connect client 1.1.0 needs API 26+; the S26 runs Android 16.
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }
@@ -33,6 +30,7 @@ android {
         }
     }
 
+    // Kotlin is built into AGP 9; its jvmTarget follows targetCompatibility below.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -41,12 +39,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 

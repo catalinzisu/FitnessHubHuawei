@@ -9,6 +9,86 @@ A free, privacy-first Android fitness app for gym-goers. It collects data from a
 
 ---
 
+## 0. Grading rubric (proiect-final.pdf) → what we build
+
+The course grading guide (`proiect-final.pdf`) is the source of truth. It changes three things compared with the original plan:
+
+1. **An own backend in Ktor Server is mandatory** (1.5 p). The app is no longer "phone only": gym data is backed up to our server and the AI coach runs through it.
+2. **Authentication through a BaaS is required** (1 p): Firebase Authentication on the phone, and the Ktor server verifies the Firebase ID token (JWT).
+3. **Every library must be on its latest minor version** on the evaluation day (checked on mvnrepository.com). Our current versions are about a year behind (see 0.3).
+
+And one rule decides everything: **a point is only given if you can explain the code behind it.** A working feature you can't explain scores 0. So the code stays simple, every criterion gets a "where is it in the code" map (`docs/defense.md`), and we walk through each part together before the exam.
+
+### 0.1 Criterion by criterion
+
+| # | Criterion (points) | What already exists | What we still build |
+|---|---|---|---|
+| 1 | **UI/UX** (1.0): coherent Material 3 design (0.5); responsive, orientations, dark/light, empty/loading states (0.5) | Material 3, dynamic color, dark theme, empty states on most screens | Landscape / tablet layout (navigation rail on wide screens), loading + error states on every network screen, a pass for consistent spacing |
+| 2 | **Stability** (1.0): no crash on rotation, no internet, invalid input (0.5); visual error feedback: Snackbar, dialogs, input validation (0.5) | Input validation + snackbars in the gym logger, confirm dialogs | Offline handling for every server call, "server unreachable" banner, rotation test of every screen, a crash checklist run before the exam |
+| 3 | **Architecture** (1.0): MVVM, passive views (0.5); UDF, immutable state exposed as StateFlow, events go UI → ViewModel (0.5) | MVVM + repositories, `StateFlow<UiState>` data classes | ViewModels in their own files, one-shot events (navigation after "Start workout") through state instead of callbacks, repository interfaces |
+| 4 | **Navigation** (1.0): ≥ 3 screens in a **type-safe** graph with arguments (0.5); no duplicate screens, `popUpTo` on login, ViewModel independent of NavController (0.5) | 10+ screens, arguments, `launchSingleTop`, ViewModels don't see the NavController | **Migrate from string routes to type-safe `@Serializable` routes**; login flow that clears the back stack (`popUpTo<Login> { inclusive = true }`), logout that clears everything |
+| 5 | **Local persistence** (1.0): Room with full CRUD (0.5); data observed as Flow (0.5) | Room, 8 tables, Flow everywhere, insert/update/delete on templates | "Edit set" (update) so sets have full CRUD too; real migrations from now on |
+| 6 | **Ktor backend** (1.5): own Ktor Server service (1.0); REST routes GET/POST/PUT/DELETE with server business logic (0.5) | — | `server/` module: Ktor + Exposed + H2, routes for training days, workouts, profile and coach (0.2), validation, StatusPages error handling, tests |
+| 7 | **BaaS auth** (1.0): sign up / sign in through Firebase Auth or Supabase Auth, or secure OAuth2/JWT | — | Firebase Auth (email + password, password reset) on the phone; Ktor `auth-jwt` verifies the Firebase ID token on every `/api` route, so each user only sees their own data |
+| 8 | **REST client** (1.5): async HTTP calls + JSON serialization (1.0); network off the main thread with coroutines (0.5) | — | Ktor Client + kotlinx.serialization, bearer token from Firebase, `Dispatchers.IO`, typed errors; sync of training days and workouts with WorkManager (network constraint, retry) |
+| 9 | **Advanced feature** (1.0): something not taught in the lab | Health Connect + watch data through Gadgetbridge, WorkManager periodic background sync, writing workouts to Health Connect, vibration rest timer | Nothing required. Optional extra: biometric unlock (BiometricPrompt), another listed example |
+
+### 0.2 The backend (criterion 6) and what it does
+
+The server has real work to do, not just storage:
+
+| Route | Method | What it does |
+|---|---|---|
+| `/health` | GET | Liveness check (no auth), used by the app's "server reachable?" indicator |
+| `/api/profile` | GET, PUT | Body weight, goals, units |
+| `/api/templates` | GET, POST | List / create training days (with their exercises) |
+| `/api/templates/{id}` | GET, PUT, DELETE | Read / replace / delete one training day |
+| `/api/workouts` | GET (`?since=`), POST | Download / upload finished workouts with their sets |
+| `/api/workouts/{id}` | DELETE | Delete a workout (also when deleted on the phone) |
+| `/api/stats/weekly` | GET | **Business logic:** weekly volume per muscle, sessions per week, PRs, computed on the server from the stored workouts |
+| `/api/coach/analyze` | POST | **Business logic:** takes the anonymous summary (section 7), runs the plateau detector, asks Gemini for the explanation with the API key kept **on the server** (environment variable), validates the answer and returns structured JSON |
+
+- Every `/api` route requires a valid Firebase ID token; the user id (`uid`) comes from the verified token, never from the request body.
+- Storage: Exposed (JetBrains' SQL library) with an H2 database file. No installation needed, runs anywhere.
+- Errors: StatusPages turns exceptions into JSON errors with the right status (400 validation, 401 token, 404 not found, 502 Gemini down).
+- Tests: `testApplication` tests for every route (valid, invalid, other user's data).
+- Running it for the demo: on the laptop/PC (`./gradlew :server:run`); the phone reaches it over USB with `adb reverse tcp:8080 tcp:8080` (no Wi-Fi setup), the emulator through `10.0.2.2`. A free cloud host is optional.
+- The app stays **offline-first**: everything works without the server; data syncs when it's back.
+
+### 0.3 Versions (checked Nov 13, 2026; re-check the week of the exam)
+
+| Library | We use | Latest |
+|---|---|---|
+| Android Gradle Plugin | 8.13.2 | 9.5.x |
+| Gradle | 8.14.3 | 9.9.x |
+| Kotlin | 2.2.21 | 2.4.21 |
+| KSP | 2.2.21-2.0.5 | 2.3.13 |
+| Compose BOM | 2025.10.01 | 2026.09.00 |
+| Navigation Compose | 2.9.5 | 2.10.x |
+| Lifecycle | 2.9.4 | 2.11.x |
+| Activity Compose | 1.11.0 | 1.13.x |
+| Core KTX | 1.17.0 | 1.19.x |
+| Room | 2.8.3 | 2.8.5 |
+| WorkManager | 2.11.0 | 2.12.x |
+| Health Connect | 1.1.0 | 1.1.0 |
+| New: Ktor (server + client) | – | 3.6.x |
+| New: kotlinx.serialization | – | 1.13.x |
+| New: Exposed | – | 1.6.x |
+| New: Firebase BoM | – | 35.2.x |
+
+AGP 9 is a big step (Kotlin support built into AGP, new DSL), so it goes **first**, before any new code. It also needs a recent Android Studio on the PC.
+
+### 0.4 Exam checklist (from the guide)
+
+- [ ] App and Ktor server run and talk to each other without errors (rehearse with `adb reverse`).
+- [ ] All dependencies on the latest minor version (re-run the version check that week).
+- [ ] You can point in the code to: where state is defined, where async calls happen, how persistence works → `docs/defense.md`.
+- [ ] No API keys or passwords in the source: Gemini key in a server environment variable, server URL in `local.properties`, `google-services.json` git-ignored.
+- [ ] You can explain every annotation and class used (`@Entity`, `@Dao`, `@Query`, `@Transaction`, `@Serializable`, `@HiltViewModel` if used, `install(Authentication)`, …) → glossary in `docs/defense.md`.
+- [ ] Submission archive built from git (no `build/`, no `data/`, no secrets).
+
+---
+
 ## 1. The idea in one paragraph
 
 The watch already measures steps, heart rate, sleep and calories very well, so the app does **not** recalculate them. Instead it acts as a **hub**: it collects data from several free sources, stores it locally, removes duplicates, and adds what the watch doesn't do: gym logging (sets, reps, weight, custom training days), goals, food logging, trends, and an AI coach that connects the dots ("your bench is stuck because…"). It also writes its own data (workouts, meals) back to Health Connect, so other apps benefit too. That makes it a "connector" in both directions.
@@ -24,9 +104,13 @@ flowchart LR
   HC <--> A[Your app]
   X[Huawei Health export<br/>JSON files] -- one-time import --> A
   OFF[Open Food Facts API] -- HTTPS --> A
-  A -- short anonymous summary --> FB[Firebase AI Logic<br/>Gemini Developer API]
-  FB -- explanation --> A
+  A -- sign in --> FA[Firebase Auth]
+  A -- REST + Firebase ID token --> S[Our Ktor server<br/>Exposed + H2]
+  S -- anonymous summary, key on server --> GM[Gemini API]
+  GM -- explanation --> S
 ```
+
+> Updated for the grading guide (section 0): the app talks to **our own Ktor server**, which stores the gym data per user and calls Gemini. Firebase is only used for sign-in. Health data from the watch (heart rate, sleep, steps) stays on the phone; only rounded summaries leave it.
 
 | Pipe | Source | What it gives | Cost |
 |---|---|---|---|
@@ -131,13 +215,15 @@ jobs:
 | Health data | Health Connect client library (`androidx.health.connect:connect-client`) |
 | Local database | Room |
 | Background sync | WorkManager |
-| Charts | Vico |
-| Network | Retrofit + OkHttp (or Ktor) |
+| Charts | Own Compose `Canvas` charts (no library) |
+| Navigation | Navigation Compose with type-safe `@Serializable` routes |
+| Network | Ktor Client (OkHttp engine) |
 | JSON | kotlinx.serialization |
-| Barcode scanning | CameraX + ML Kit Barcode Scanning (free, on-device) |
-| AI coach | Firebase AI Logic SDK → Gemini Developer API (Spark plan, no card) |
-| API protection | Firebase App Check (Play Integrity; debug provider for debug builds) |
-| Dependency injection | Hilt (optional) |
+| Backend | Ktor Server (Netty), Exposed + H2, `auth-jwt`, StatusPages |
+| Sign-in | Firebase Authentication (email + password) |
+| Barcode scanning | CameraX + ML Kit Barcode Scanning (optional) |
+| AI coach | Gemini API called **from our Ktor server** (key in a server environment variable) |
+| Dependency injection | Manual (`AppContainer`); small enough to explain line by line |
 | CI builds | GitHub Actions |
 | Watch bridge | Gadgetbridge (installed on the phone, not part of your code) |
 | Presentation | scrcpy (phone mirroring on the laptop) |
@@ -248,6 +334,8 @@ Output is a small data object, e.g.:
 No name, no birth date, no exact timestamps, no raw heart-rate samples. Just rounded numbers.
 
 ### Layer 2: Gemini via Firebase AI Logic
+
+> **Changed by the grading guide:** Gemini is now called by our Ktor server (`POST /api/coach/analyze`, section 0.2), not by Firebase AI Logic in the app. The phone sends the same anonymous summary to our server; the server runs the plateau detector, adds the coach rules below as the system instruction and calls Gemini with a key read from an environment variable. The setup steps below are kept for reference only. The coach rules, app behaviour and terms still apply.
 
 **Setup (free):**
 1. Firebase console > create a project on the **Spark** (no-cost) plan.
@@ -405,6 +493,23 @@ val steps = result[StepsRecord.COUNT_TOTAL] ?: 0L
 ---
 
 ## 9. Week-by-week plan
+
+### 9.1 Current plan (after the grading guide)
+
+Done so far: setup, watch data dashboard, gym logger, progress charts, PRs, progression hints, watch heart rate on workouts, Health Connect export, WorkManager background sync (the old weeks 1–4).
+
+| Phase | Dates | Goals | Done when… | Criteria |
+|---|---|---|---|---|
+| A | Nov 14–16 | **Up to date + type-safe.** Upgrade everything to the latest minor (AGP 9, Gradle 9, Kotlin 2.4, …). Migrate navigation to `@Serializable` routes. "Edit set" for full CRUD. | Build, tests and an emulator run pass on the new versions; no string routes left. | 4, 5, versions |
+| B | Nov 17–23 | **Ktor server.** `server/` module, Exposed + H2, profile / templates / workouts routes, weekly stats, StatusPages, request validation, route tests. | `./gradlew :server:test` passes; every route answers from Postman/curl. | 6 |
+| C | Nov 24–30 | **Auth + REST client.** Firebase project, sign up / sign in / reset password / sign out screens, login flow with `popUpTo`. Server verifies the Firebase JWT. Ktor Client with bearer token; sync of training days and workouts (WorkManager, network constraint, retry). Offline banner. | Sign in on two devices → the same training days appear on both; airplane mode never crashes. | 7, 8, 2, 4 |
+| D | Dec 1–7 | **AI coach.** Plateau detector, anonymous summary + "What will be sent" preview, `/api/coach/analyze` on the server with Gemini, coach screen, offline fallback (detector findings only). | "Why is my bench stuck?" gives a grounded answer through our server. | 6, 8, 9 |
+| E | Dec 8–14 | **Polish + defense.** Landscape / wide-screen layout, loading/error/empty states everywhere, rotation + offline + invalid-input crash pass, privacy policy update, `docs/defense.md` (criterion → file map, annotation glossary), code walkthroughs together. Nutrition / Huawei import only if time is left. | Section 0.4 checklist is green. | 1, 2, 3 |
+| Buffer | Dec 15–21 | Re-check versions, build the submission archive, rehearse the oral defense, paper evaluation. | Submitted. | all |
+
+If time gets tight, the order of importance is: A, B, C (they carry 4 + 1.5 + 1 + 1.5 points), then E, then D. The coach is the paper's topic but carries no extra points in the rubric on its own.
+
+### 9.2 Original plan (before the grading guide, kept for reference)
 
 | Week | Dates | Goals | Done when… |
 |---|---|---|---|
