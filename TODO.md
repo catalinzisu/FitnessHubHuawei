@@ -37,7 +37,7 @@ Legendă: **C1–C9** = criteriile din barem.
 ## Faza C – Autentificare + client REST (24–30 nov) – C7, C8, C2, C4
 
 - [x] C1. Proiect Firebase (Spark), Firebase Auth email + parolă, `google-services.json` (ignorat de git)
-- [ ] C2. Ecrane Login / Register / Reset parolă, validare input, mesaje de eroare
+- [x] C2. Ecrane Login / Register / Reset parolă, validare input, mesaje de eroare
 - [ ] C3. Flux login cu `popUpTo<Login> { inclusive = true }`; logout golește tot back stack-ul
 - [ ] C4. Serverul verifică token-ul Firebase (JWT) cu `auth-jwt`; fiecare user vede doar datele lui (înlocuiește header-ul temporar `X-User-Id` din B3)
 - [ ] C5. Ktor Client + kotlinx.serialization, bearer token, `Dispatchers.IO`, erori tipizate
