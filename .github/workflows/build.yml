@@ -23,7 +23,7 @@ jobs:
       # Week 5: add the google-services.json step from the plan (section 3B) here.
 
       - name: Build
-        run: chmod +x ./gradlew && ./gradlew testDebugUnitTest assembleDebug --stacktrace
+        run: chmod +x ./gradlew && ./gradlew testDebugUnitTest :server:test assembleDebug --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:

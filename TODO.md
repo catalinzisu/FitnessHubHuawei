@@ -26,7 +26,7 @@ Legendă: **C1–C9** = criteriile din barem.
 
 ## Faza B – Server Ktor (17–23 nov) – C6
 
-- [ ] B1. Modul `server/`: Ktor (Netty), ContentNegotiation JSON, CallLogging, StatusPages
+- [x] B1. Modul `server/`: Ktor (Netty), ContentNegotiation JSON, CallLogging, StatusPages
 - [ ] B2. Bază de date pe server: Exposed + H2 (fișier), tabele users/profile/templates/workouts/sets
 - [ ] B3. Rute: `GET /health`, `/api/profile` (GET, PUT), `/api/templates` (GET, POST, GET/PUT/DELETE pe id), `/api/workouts` (GET `?since=`, POST, DELETE pe id)
 - [ ] B4. Logică business: `GET /api/stats/weekly` (volum pe mușchi, antrenamente/săptămână, PR-uri)
