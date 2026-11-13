@@ -30,7 +30,7 @@ Legendă: **C1–C9** = criteriile din barem.
 - [x] B2. Bază de date pe server: Exposed + H2 (fișier), tabele users/profile/templates/workouts/sets
 - [x] B3. Rute: `GET /health`, `/api/profile` (GET, PUT), `/api/templates` (GET, POST, GET/PUT/DELETE pe id), `/api/workouts` (GET `?since=`, POST, DELETE pe id)
 - [x] B4. Logică business: `GET /api/stats/weekly` (volum pe mușchi, antrenamente/săptămână, PR-uri)
-- [ ] B5. Validare request-uri + erori JSON (400/401/404/502)
+- [x] B5. Validare request-uri + erori JSON (400/401/404/502)
 - [ ] B6. Teste cu `testApplication` pentru fiecare rută
 - [ ] B7. Rulare locală documentată: `./gradlew :server:run`, telefon prin `adb reverse tcp:8080 tcp:8080`, emulator prin `10.0.2.2`
 

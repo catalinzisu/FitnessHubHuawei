@@ -22,6 +22,7 @@ fun main() {
  */
 fun Application.module(database: AppDatabase) {
     configureSerialization()
+    configureValidation()
     configureLogging()
     configureErrors()
     configureRouting(database)

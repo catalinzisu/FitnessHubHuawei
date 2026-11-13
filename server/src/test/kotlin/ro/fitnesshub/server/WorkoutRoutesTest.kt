@@ -54,7 +54,7 @@ class WorkoutRoutesTest {
     fun since_returnsOnlyNewerWorkouts_oldestFirst() = apiTest {
         val alice = clientFor("alice")
         listOf(3_000L, 1_000L, 2_000L).forEachIndexed { i, start ->
-            alice.post("/api/workouts") { setBody(workout(clientId = i.toLong(), startedAt = start)) }
+            alice.post("/api/workouts") { setBody(workout(clientId = i + 1L, startedAt = start)) }
         }
 
         val all = alice.get("/api/workouts").body<List<WorkoutResponse>>()
