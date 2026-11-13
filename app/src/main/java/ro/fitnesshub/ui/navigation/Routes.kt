@@ -44,9 +44,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable object AuthGraph
 
-@Serializable object LoginRoute
+/**
+ * [firstScreen] = true when sign-in is the app's first screen (first start or after signing out):
+ * there is no back arrow, "Continue without account" is offered, and signing in opens the app.
+ * false when opened from Settings: signing in goes back to Settings.
+ */
+@Serializable data class LoginRoute(val firstScreen: Boolean = false)
 
-@Serializable object RegisterRoute
+/** [firstScreen] is passed on from the sign-in screen; it decides where a new account goes next. */
+@Serializable data class RegisterRoute(val firstScreen: Boolean = false)
 
 /** [email] pre-fills the form with what was typed on the sign-in screen. */
 @Serializable data class ResetPasswordRoute(val email: String = "")

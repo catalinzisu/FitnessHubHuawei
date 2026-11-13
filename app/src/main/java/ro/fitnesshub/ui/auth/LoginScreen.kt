@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,13 +30,14 @@ import ro.fitnesshub.R
 
 /**
  * Sign in with email and password.
- * @param onBack null when there is nothing to go back to (sign-in is the first screen).
+ * @param onBack null when sign-in is the app's first screen: then there is no back arrow and
+ *   "Continue without account" is shown instead.
  * @param onForgotPassword gets the email typed so far, to pre-fill the reset form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onSignedIn: () -> Unit,
+    onDone: () -> Unit,
     onRegister: () -> Unit,
     onForgotPassword: (String) -> Unit,
     onBack: (() -> Unit)?,
@@ -45,10 +47,10 @@ fun LoginScreen(
     val focus = LocalFocusManager.current
 
     // One-shot event from the ViewModel: mark it handled first, then navigate.
-    LaunchedEffect(state.signedIn) {
-        if (state.signedIn) {
-            viewModel.signedInHandled()
-            onSignedIn()
+    LaunchedEffect(state.done) {
+        if (state.done) {
+            viewModel.doneHandled()
+            onDone()
         }
     }
 
@@ -105,6 +107,19 @@ fun LoginScreen(
                 TextButton(onClick = onRegister, enabled = !state.loading) {
                     Text(stringResource(R.string.auth_create_account))
                 }
+            }
+            if (onBack == null) {
+                // The app works fully without an account; the account only adds the server copy.
+                OutlinedButton(
+                    onClick = viewModel::continueWithoutAccount,
+                    enabled = !state.loading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.auth_continue_without)) }
+                Text(
+                    stringResource(R.string.auth_continue_without_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

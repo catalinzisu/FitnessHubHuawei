@@ -16,6 +16,7 @@ import ro.fitnesshub.data.auth.AuthRepository
 import ro.fitnesshub.data.auth.AuthResult
 import ro.fitnesshub.data.auth.AuthValidation
 import ro.fitnesshub.data.auth.FieldError
+import ro.fitnesshub.data.auth.SignInChoice
 
 data class LoginUiState(
     val email: String = "",
@@ -25,11 +26,14 @@ data class LoginUiState(
     /** True while Firebase is answering; the button shows a spinner and can't be pressed again. */
     val loading: Boolean = false,
     val error: AuthError? = null,
-    /** One-shot event: signed in, the screen should leave. */
-    val signedIn: Boolean = false,
+    /** One-shot event: signed in, or chose to go on without an account; the screen should leave. */
+    val done: Boolean = false,
 )
 
-class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
+class LoginViewModel(
+    private val auth: AuthRepository,
+    private val signInChoice: SignInChoice,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
@@ -51,19 +55,25 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             when (val result = auth.signIn(current.email, current.password)) {
-                AuthResult.Success -> _state.update { it.copy(loading = false, password = "", signedIn = true) }
+                AuthResult.Success -> _state.update { it.copy(loading = false, password = "", done = true) }
                 is AuthResult.Failure -> _state.update { it.copy(loading = false, error = result.error) }
             }
         }
     }
 
-    fun signedInHandled() = _state.update { it.copy(signedIn = false) }
+    /** Only offered when sign-in is the first screen. Remembered, so the app opens on Today next time. */
+    fun continueWithoutAccount() {
+        signInChoice.continuedWithoutAccount = true
+        _state.update { it.copy(done = true) }
+    }
+
+    fun doneHandled() = _state.update { it.copy(done = false) }
 
     companion object {
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp
-                LoginViewModel(app.container.authRepository)
+                LoginViewModel(app.container.authRepository, app.container.signInChoice)
             }
         }
     }

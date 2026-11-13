@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import ro.fitnesshub.data.GymRepository
 import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.auth.AuthRepository
+import ro.fitnesshub.data.auth.SignInChoice
 import ro.fitnesshub.data.db.AppDatabase
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.SeedDataWriter
@@ -71,4 +72,12 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository by lazy {
         AuthRepository(if (firebaseConfigured) FirebaseAuth.getInstance() else null)
     }
+    val signInChoice: SignInChoice by lazy { SignInChoice(appContext) }
+
+    /** Decides the first screen when the app starts (see SignInChoice.startsAtSignIn). */
+    fun startsAtSignIn(): Boolean = SignInChoice.startsAtSignIn(
+        configured = authRepository.isConfigured,
+        signedIn = authRepository.currentUserNow() != null,
+        continuedWithoutAccount = signInChoice.continuedWithoutAccount,
+    )
 }

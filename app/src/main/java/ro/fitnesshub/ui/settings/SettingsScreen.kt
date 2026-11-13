@@ -46,6 +46,7 @@ fun SettingsScreen(
     onOpenLog: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onSignIn: () -> Unit,
+    onSignedOut: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -60,6 +61,13 @@ fun SettingsScreen(
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
         onPauseOrDispose { }
+    }
+
+    LaunchedEffect(state.signedOut) {
+        if (state.signedOut) {
+            viewModel.signedOutHandled()
+            onSignedOut()
+        }
     }
 
     LaunchedEffect(state.message) {

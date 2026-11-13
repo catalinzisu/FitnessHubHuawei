@@ -15,6 +15,7 @@ import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.R
 import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.auth.AuthRepository
+import ro.fitnesshub.data.auth.SignInChoice
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.data.health.SeedDataWriter
@@ -37,6 +38,8 @@ data class SettingsUiState(
     val backgroundSync: OptionalAccess = OptionalAccess.Unknown,
     val workoutExport: OptionalAccess = OptionalAccess.Unknown,
     val account: AccountState = AccountState.SignedOut,
+    /** One-shot event: just signed out; the app goes back to the sign-in screen. */
+    val signedOut: Boolean = false,
 )
 
 class SettingsViewModel(
@@ -44,6 +47,7 @@ class SettingsViewModel(
     private val repository: HealthRepository,
     private val healthConnect: HealthConnectSource,
     private val auth: AuthRepository,
+    private val signInChoice: SignInChoice,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -63,7 +67,13 @@ class SettingsViewModel(
         }
     }
 
-    fun signOut() = auth.signOut()
+    fun signOut() {
+        auth.signOut()
+        signInChoice.continuedWithoutAccount = false // offer sign-in again on the next start
+        _state.update { it.copy(signedOut = true) }
+    }
+
+    fun signedOutHandled() = _state.update { it.copy(signedOut = false) }
 
     /** Re-reads the optional permissions; called on every resume. */
     fun refresh() {
@@ -140,6 +150,7 @@ class SettingsViewModel(
                     app.container.healthRepository,
                     app.container.healthConnect,
                     app.container.authRepository,
+                    app.container.signInChoice,
                 )
             }
         }

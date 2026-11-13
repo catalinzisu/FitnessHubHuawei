@@ -55,8 +55,13 @@ private enum class TopDestination(val graph: Any, @param:StringRes val label: In
 /** Key used to hand a picked exercise back to the screen that opened the picker. */
 private const val PICKED_EXERCISE = "picked_exercise_id"
 
+/**
+ * The whole app's navigation.
+ * @param startAtSignIn true → the app opens on the sign-in screen (not signed in and
+ *   "Continue without account" not chosen yet); false → it opens on Today.
+ */
 @Composable
-fun AppNavHost() {
+fun AppNavHost(startAtSignIn: Boolean) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -83,7 +88,7 @@ fun AppNavHost() {
         // so only the bottom bar's space is reserved here.
         NavHost(
             navController = navController,
-            startDestination = TodayGraph,
+            startDestination = if (startAtSignIn) AuthGraph else TodayGraph,
             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
         ) {
             navigation<TodayGraph>(startDestination = TodayRoute) {
@@ -150,25 +155,31 @@ fun AppNavHost() {
                     SettingsScreen(
                         onOpenLog = { navController.navigate(LogRoute) { launchSingleTop = true } },
                         onOpenPrivacy = { navController.navigate(PrivacyRoute) { launchSingleTop = true } },
-                        onSignIn = { navController.navigate(LoginRoute) { launchSingleTop = true } },
+                        onSignIn = { navController.navigate(LoginRoute(firstScreen = false)) { launchSingleTop = true } },
+                        onSignedOut = { navController.showSignInAfterSignOut() },
                     )
                 }
                 composable<LogRoute> { entry -> LogScreen(onBack = { navController.popBackStackOnce(entry) }) }
                 composable<PrivacyRoute> { entry -> PrivacyPolicyScreen(onBack = { navController.popBackStackOnce(entry) }) }
             }
 
-            navigation<AuthGraph>(startDestination = LoginRoute) {
+            // When this graph is the start destination, the first screen is sign-in with firstScreen = true.
+            navigation<AuthGraph>(startDestination = LoginRoute(firstScreen = true)) {
                 composable<LoginRoute> { entry ->
+                    val route = entry.toRoute<LoginRoute>()
                     LoginScreen(
-                        onSignedIn = { navController.leaveAuth() },
-                        onRegister = { navController.navigate(RegisterRoute) { launchSingleTop = true } },
+                        onDone = { navController.leaveAuth(route.firstScreen) },
+                        onRegister = {
+                            navController.navigate(RegisterRoute(firstScreen = route.firstScreen)) { launchSingleTop = true }
+                        },
                         onForgotPassword = { email -> navController.navigate(ResetPasswordRoute(email)) { launchSingleTop = true } },
-                        onBack = { navController.popBackStackOnce(entry) },
+                        onBack = if (route.firstScreen) null else ({ navController.popBackStackOnce(entry) }),
                     )
                 }
                 composable<RegisterRoute> { entry ->
+                    val route = entry.toRoute<RegisterRoute>()
                     RegisterScreen(
-                        onRegistered = { navController.leaveAuth() },
+                        onRegistered = { navController.leaveAuth(route.firstScreen) },
                         onBack = { navController.popBackStackOnce(entry) },
                     )
                 }
@@ -202,9 +213,32 @@ private fun <T : Any> NavController.navigateOrReturn(route: T) {
     }
 }
 
-/** After signing in or registering: close every sign-in screen and go back to where the user was. */
-private fun NavController.leaveAuth() {
-    popBackStack<AuthGraph>(inclusive = true)
+/**
+ * Leaves the sign-in screens after signing in, registering or "Continue without account".
+ * - Sign-in was the first screen: open Today and drop every sign-in screen from the back stack
+ *   (popUpTo the sign-in graph, inclusive), so Back closes the app instead of showing sign-in again.
+ * - Opened from Settings: just close the sign-in screens, which lands back in Settings.
+ */
+private fun NavController.leaveAuth(firstScreen: Boolean) {
+    if (firstScreen) {
+        navigate(TodayGraph) {
+            popUpTo<AuthGraph> { inclusive = true }
+        }
+    } else {
+        popBackStack<AuthGraph>(inclusive = true)
+    }
+}
+
+/**
+ * After signing out: empty the whole back stack (popUpTo the root graph, inclusive) and show
+ * sign-in as the only screen. The tabs' saved places are forgotten too, so nothing of the
+ * previous session can be reached with Back or by tapping a tab.
+ */
+private fun NavController.showSignInAfterSignOut() {
+    navigate(LoginRoute(firstScreen = true)) {
+        popUpTo(graph.id) { inclusive = true }
+    }
+    TopDestination.entries.forEach { clearBackStack(it.graph) }
 }
 
 @Composable

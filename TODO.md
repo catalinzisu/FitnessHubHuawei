@@ -38,7 +38,7 @@ Legendă: **C1–C9** = criteriile din barem.
 
 - [x] C1. Proiect Firebase (Spark), Firebase Auth email + parolă, `google-services.json` (ignorat de git)
 - [x] C2. Ecrane Login / Register / Reset parolă, validare input, mesaje de eroare
-- [ ] C3. Flux login cu `popUpTo<Login> { inclusive = true }`; logout golește tot back stack-ul
+- [x] C3. Flux login cu `popUpTo<Login> { inclusive = true }`; logout golește tot back stack-ul
 - [ ] C4. Serverul verifică token-ul Firebase (JWT) cu `auth-jwt`; fiecare user vede doar datele lui (înlocuiește header-ul temporar `X-User-Id` din B3)
 - [ ] C5. Ktor Client + kotlinx.serialization, bearer token, `Dispatchers.IO`, erori tipizate
 - [ ] C6. URL-ul serverului din `local.properties` → `BuildConfig` (nimic hardcodat)
