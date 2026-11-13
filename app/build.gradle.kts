@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -13,6 +15,11 @@ if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
 
+// Machine-specific settings that are not in git (local.properties), e.g. server.url=http://10.0.2.2:8080
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
 android {
     namespace = "ro.fitnesshub"
     compileSdk = 37
@@ -26,6 +33,10 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+
+        // Address of our Ktor server, read from local.properties instead of being written in the code.
+        // Empty when missing (e.g. on CI): the app then works without the server.
+        buildConfigField("String", "SERVER_URL", "\"${localProperties.getProperty("server.url", "")}\"")
     }
 
     buildTypes {
@@ -83,6 +94,14 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.kotlinx.coroutines.play.services)
 
+    // REST client for our Ktor server. The JSON classes come from :shared, the same ones the server uses.
+    implementation(project(":shared"))
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
     testImplementation(libs.junit)
     testImplementation(libs.org.json)
+    testImplementation(libs.ktor.client.mock) // fake server responses for the API client tests
 }

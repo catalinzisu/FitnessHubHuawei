@@ -6,7 +6,7 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import ro.fitnesshub.server.ProfileDto
+import ro.fitnesshub.api.ProfileDto
 import ro.fitnesshub.server.db.ProfileRepository
 import ro.fitnesshub.server.db.UserRepository
 

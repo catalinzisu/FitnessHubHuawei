@@ -1,8 +1,11 @@
-package ro.fitnesshub.server
+package ro.fitnesshub.api
 
 import kotlinx.serialization.Serializable
 
-// The JSON the app and the server exchange under /api. Requests and responses are separate
+// The JSON the app and the server exchange. This module is shared by both, so the two sides
+// always agree on field names and types: change a class here and both are rebuilt with it.
+//
+// Requests and responses are separate
 // classes where the server adds fields (id, updatedAt) the app must not choose itself.
 // Times are epoch milliseconds.
 
@@ -126,3 +129,16 @@ data class PersonalRecord(
     /** Day of the workout, e.g. "2026-11-12". */
     val date: String,
 )
+
+// ---- Server status and errors ----
+
+/** Body of `GET /health`. */
+@Serializable
+data class HealthResponse(val status: String, val version: String, val database: String)
+
+/**
+ * Body of every error response. [error] is a fixed code the app can check; [message] is for people;
+ * [details] lists every broken rule when validation fails.
+ */
+@Serializable
+data class ErrorResponse(val error: String, val message: String, val details: List<String>? = null)

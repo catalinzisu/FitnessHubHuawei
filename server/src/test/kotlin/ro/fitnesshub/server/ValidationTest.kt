@@ -1,5 +1,10 @@
 package ro.fitnesshub.server
 
+import ro.fitnesshub.api.ProfileDto
+import ro.fitnesshub.api.TemplateExerciseDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.WorkoutRequest
+import ro.fitnesshub.api.WorkoutSetDto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

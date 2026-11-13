@@ -7,6 +7,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import ro.fitnesshub.api.HealthResponse
 import ro.fitnesshub.server.db.AppDatabase
 import ro.fitnesshub.server.db.ProfileRepository
 import ro.fitnesshub.server.db.TemplateRepository

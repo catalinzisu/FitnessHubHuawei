@@ -1,5 +1,8 @@
 package ro.fitnesshub.server
 
+import ro.fitnesshub.api.ProfileDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.WorkoutRequest
 import java.time.DayOfWeek
 
 /**

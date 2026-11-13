@@ -19,6 +19,10 @@ import ro.fitnesshub.data.auth.SignInChoice
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.data.health.SeedDataWriter
+import ro.fitnesshub.data.remote.ApiError
+import ro.fitnesshub.data.remote.ApiResult
+import ro.fitnesshub.data.remote.FitnessApi
+import ro.fitnesshub.ui.common.toMessage
 import ro.fitnesshub.ui.common.UiMessage
 import ro.fitnesshub.util.AppLog
 
@@ -48,6 +52,7 @@ class SettingsViewModel(
     private val healthConnect: HealthConnectSource,
     private val auth: AuthRepository,
     private val signInChoice: SignInChoice,
+    private val api: FitnessApi,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -121,6 +126,25 @@ class SettingsViewModel(
         }
     }
 
+    /**
+     * Checks the whole chain: is the server up (GET /health), and does it accept this user's
+     * Firebase token (GET /api/profile)? The answer is shown as a message.
+     */
+    fun testServer() = runTool {
+        when (val health = api.health()) {
+            is ApiResult.Failure -> health.error.toMessage()
+            is ApiResult.Success -> when (val profile = api.profile()) {
+                is ApiResult.Success -> UiMessage(R.string.server_check_ok, listOf(health.value.version))
+                is ApiResult.Failure ->
+                    if (profile.error == ApiError.NotSignedIn) {
+                        UiMessage(R.string.server_check_up_signed_out, listOf(health.value.version))
+                    } else {
+                        profile.error.toMessage()
+                    }
+            }
+        }
+    }
+
     fun messageShown() = _state.update { it.copy(message = null) }
 
     private fun runTool(block: suspend () -> UiMessage) {
@@ -151,6 +175,7 @@ class SettingsViewModel(
                     app.container.healthConnect,
                     app.container.authRepository,
                     app.container.signInChoice,
+                    app.container.fitnessApi,
                 )
             }
         }

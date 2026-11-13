@@ -7,6 +7,9 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import ro.fitnesshub.api.ErrorResponse
+import ro.fitnesshub.api.HealthResponse
+import ro.fitnesshub.api.TemplateRequest
 import ro.fitnesshub.server.db.AppDatabase
 import java.sql.SQLException
 import kotlin.test.Test

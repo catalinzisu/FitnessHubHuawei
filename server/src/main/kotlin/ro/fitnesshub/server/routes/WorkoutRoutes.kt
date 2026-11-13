@@ -10,7 +10,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import ro.fitnesshub.server.WorkoutRequest
+import ro.fitnesshub.api.WorkoutRequest
 import ro.fitnesshub.server.db.UserRepository
 import ro.fitnesshub.server.db.WorkoutRepository
 

@@ -11,6 +11,12 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import ro.fitnesshub.api.ErrorResponse
+import ro.fitnesshub.api.ProfileDto
+import ro.fitnesshub.api.TemplateExerciseDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.TemplateResponse
+import ro.fitnesshub.api.WorkoutRequest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

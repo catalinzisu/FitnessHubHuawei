@@ -23,6 +23,7 @@ tasks.named<JavaExec>("run") {
 }
 
 dependencies {
+    implementation(project(":shared")) // the API's JSON classes, shared with the app
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)

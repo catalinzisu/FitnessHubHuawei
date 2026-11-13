@@ -10,7 +10,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
-import ro.fitnesshub.server.TemplateRequest
+import ro.fitnesshub.api.TemplateRequest
 import ro.fitnesshub.server.db.TemplateRepository
 import ro.fitnesshub.server.db.UserRepository
 

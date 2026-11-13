@@ -106,6 +106,16 @@ fun SettingsScreen(
                 )
             }
             SettingsRow(
+                title = stringResource(R.string.settings_server),
+                description = if (state.working) {
+                    stringResource(R.string.settings_server_checking)
+                } else {
+                    BuildConfig.SERVER_URL.ifBlank { stringResource(R.string.settings_server_not_set) }
+                },
+                enabled = !state.working,
+                onClick = viewModel::testServer,
+            )
+            SettingsRow(
                 title = stringResource(R.string.settings_hc),
                 description = stringResource(R.string.settings_hc_desc),
                 onClick = { HealthConnectIntents.openSettings(context) },

@@ -6,6 +6,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
+import ro.fitnesshub.api.WorkoutRequest
+import ro.fitnesshub.api.WorkoutResponse
+import ro.fitnesshub.api.WorkoutSetDto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

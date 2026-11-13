@@ -1,10 +1,10 @@
 package ro.fitnesshub.server.stats
 
-import ro.fitnesshub.server.MuscleVolume
-import ro.fitnesshub.server.PersonalRecord
-import ro.fitnesshub.server.WeekStats
-import ro.fitnesshub.server.WeeklyStatsResponse
-import ro.fitnesshub.server.WorkoutResponse
+import ro.fitnesshub.api.MuscleVolume
+import ro.fitnesshub.api.PersonalRecord
+import ro.fitnesshub.api.WeekStats
+import ro.fitnesshub.api.WeeklyStatsResponse
+import ro.fitnesshub.api.WorkoutResponse
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate

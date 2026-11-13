@@ -32,7 +32,7 @@ Legendă: **C1–C9** = criteriile din barem.
 - [x] B4. Logică business: `GET /api/stats/weekly` (volum pe mușchi, antrenamente/săptămână, PR-uri)
 - [x] B5. Validare request-uri + erori JSON (400/401/404/502)
 - [x] B6. Teste cu `testApplication` pentru fiecare rută
-- [x] B7. Rulare locală documentată: `./gradlew :server:run`, telefon prin `adb reverse tcp:8080 tcp:8080`, emulator prin `10.0.2.2`
+- [x] B7. Rulare locală documentată: `./gradlew :server:run`, telefon și emulator prin `adb reverse tcp:8080 tcp:8080` (`10.0.2.2` e blocat de Android 17 pentru aplicații, vezi C5)
 
 ## Faza C – Autentificare + client REST (24–30 nov) – C7, C8, C2, C4
 
@@ -40,8 +40,8 @@ Legendă: **C1–C9** = criteriile din barem.
 - [x] C2. Ecrane Login / Register / Reset parolă, validare input, mesaje de eroare
 - [x] C3. Flux login cu `popUpTo<Login> { inclusive = true }`; logout golește tot back stack-ul
 - [x] C4. Serverul verifică token-ul Firebase (JWT) cu `auth-jwt`; fiecare user vede doar datele lui (a înlocuit header-ul temporar `X-User-Id` din B3)
-- [ ] C5. Ktor Client + kotlinx.serialization, bearer token, `Dispatchers.IO`, erori tipizate
-- [ ] C6. URL-ul serverului din `local.properties` → `BuildConfig` (nimic hardcodat)
+- [x] C5. Ktor Client + kotlinx.serialization, bearer token, `Dispatchers.IO`, erori tipizate
+- [x] C6. URL-ul serverului din `local.properties` → `BuildConfig` (nimic hardcodat)
 - [ ] C7. Sincronizare zile de antrenament + antrenamente (WorkManager, constrângere de rețea, retry)
 - [ ] C8. Banner „server indisponibil / offline”; aplicația merge complet și fără server
 

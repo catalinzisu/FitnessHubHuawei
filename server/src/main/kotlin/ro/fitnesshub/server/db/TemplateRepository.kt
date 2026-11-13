@@ -10,9 +10,9 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import ro.fitnesshub.server.TemplateExerciseDto
-import ro.fitnesshub.server.TemplateRequest
-import ro.fitnesshub.server.TemplateResponse
+import ro.fitnesshub.api.TemplateExerciseDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.TemplateResponse
 
 /** Training days. Every function only sees the templates of user [uid]. */
 class TemplateRepository(private val db: AppDatabase) {

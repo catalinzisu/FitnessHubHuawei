@@ -11,6 +11,7 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
+import ro.fitnesshub.api.ErrorResponse
 import java.net.URI
 import java.util.concurrent.TimeUnit
 

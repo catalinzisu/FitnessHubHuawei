@@ -6,6 +6,11 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
+import ro.fitnesshub.api.ErrorResponse
+import ro.fitnesshub.api.ProfileDto
+import ro.fitnesshub.api.WeeklyStatsResponse
+import ro.fitnesshub.api.WorkoutRequest
+import ro.fitnesshub.api.WorkoutSetDto
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlin.test.Test

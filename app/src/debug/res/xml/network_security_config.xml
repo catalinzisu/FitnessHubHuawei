@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug builds only (this file replaces the main one): the local development server speaks plain
+    HTTP, so it is allowed for the computer reached through `adb reverse tcp:8080 tcp:8080`
+    (http://localhost:8080 on the emulator or a USB phone) and nothing else.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

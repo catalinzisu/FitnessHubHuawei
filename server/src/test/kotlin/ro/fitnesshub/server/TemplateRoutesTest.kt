@@ -7,6 +7,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
+import ro.fitnesshub.api.ErrorResponse
+import ro.fitnesshub.api.TemplateExerciseDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.TemplateResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

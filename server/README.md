@@ -51,19 +51,30 @@ Tables are created automatically on start-up.
 
 ## Reach it from the app
 
-The server listens on all network interfaces. How the app reaches it depends on the device:
+The same setup works for the emulator and a phone on USB: forward the port with adb, and the app
+talks to its own `localhost`, which adb sends on to the computer.
 
-| Device | Server URL in the app | Extra step |
-|---|---|---|
-| Android emulator | `http://10.0.2.2:8080` | none: `10.0.2.2` is the emulator's name for your computer |
-| Phone over USB | `http://localhost:8080` | `adb reverse tcp:8080 tcp:8080` (again after every reconnect) |
-| Phone on the same Wi-Fi | `http://<your PC's IP>:8080` | allow port 8080 in the PC's firewall |
+```bash
+adb reverse tcp:8080 tcp:8080     # again after every reconnect or emulator restart
+```
 
-USB with `adb reverse` is the simplest for a demo: it needs no Wi-Fi or firewall change, and the phone
-connects to its own `localhost`, which adb forwards to the computer. Undo it with
-`adb reverse --remove tcp:8080`.
+In `local.properties` (not in git), the app reads its server address from:
 
-The server address is not hard-coded in the app: it comes from `local.properties` (step C6).
+```properties
+server.url=http://localhost:8080
+```
+
+The address is turned into `BuildConfig.SERVER_URL` at build time, so nothing is hard-coded in the code.
+Without it (e.g. on CI) the app still builds and works, just without the server.
+Undo the forwarding with `adb reverse --remove tcp:8080`.
+
+Why not `10.0.2.2` (the emulator's name for the computer) or the PC's Wi-Fi address? From Android 17,
+an app that targets it (we target 37) may only reach addresses on the local network after the user
+grants the *local network* permission. The emulator's own shell still reaches `10.0.2.2`, but the app's
+requests time out. `localhost` through `adb reverse` is not the local network, so it needs no permission.
+
+Debug builds allow plain HTTP only to `localhost` / `127.0.0.1`
+(`app/src/debug/res/xml/network_security_config.xml`); release builds allow HTTPS only.
 
 ## API
 

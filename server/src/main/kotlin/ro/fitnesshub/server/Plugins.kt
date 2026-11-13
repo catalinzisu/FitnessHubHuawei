@@ -19,6 +19,10 @@ import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
+import ro.fitnesshub.api.ErrorResponse
+import ro.fitnesshub.api.ProfileDto
+import ro.fitnesshub.api.TemplateRequest
+import ro.fitnesshub.api.WorkoutRequest
 
 /** JSON in and out: request bodies become @Serializable classes and responses are written as JSON. */
 fun Application.configureSerialization() {

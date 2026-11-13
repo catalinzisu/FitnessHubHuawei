@@ -19,7 +19,7 @@ fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val database = AppDatabase(System.getenv("DB_URL") ?: AppDatabase.DEFAULT_URL)
     val firebase = FirebaseAuthConfig.forProject(projectId)
-    // 0.0.0.0 = reachable from the emulator (10.0.2.2) and, via `adb reverse`, from a phone.
+    // 0.0.0.0 = every network interface; the app reaches it through `adb reverse tcp:8080 tcp:8080`.
     embeddedServer(Netty, port = port, host = "0.0.0.0") { module(database, firebase) }.start(wait = true)
 }
 

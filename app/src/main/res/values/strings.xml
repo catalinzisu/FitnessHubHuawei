@@ -145,6 +145,23 @@
     <string name="settings_account_not_configured">Not available in this build</string>
     <string name="settings_sign_out_confirm">Sign out? Your workouts stay on this phone.</string>
 
+    <string name="settings_server">Test server connection</string>
+    <string name="settings_server_checking">Checking…</string>
+    <string name="settings_server_not_set">No server address in this build</string>
+    <string name="server_check_ok">Server %1$s is up and accepts your sign-in.</string>
+    <string name="server_check_up_signed_out">Server %1$s is up. Sign in to use it.</string>
+
+    <!-- Server errors (data/remote/ApiError) -->
+    <string name="api_error_not_configured">No server address in this build (server.url in local.properties).</string>
+    <string name="api_error_not_signed_in">Sign in to use the server.</string>
+    <string name="api_error_unauthorized">The server didn\'t accept your sign-in. Sign out and in again.</string>
+    <string name="api_error_offline">Can\'t reach the server. Check the connection and that the server is running.</string>
+    <string name="api_error_timeout">The server took too long to answer. Try again.</string>
+    <string name="api_error_invalid">The server refused the data: %1$s</string>
+    <string name="api_error_not_found">Not found on the server.</string>
+    <string name="api_error_server">The server had a problem (HTTP %1$d). Try again later.</string>
+    <string name="api_error_unexpected">The server\'s answer couldn\'t be read.</string>
+
     <!-- Sign-in (Firebase Authentication) -->
     <string name="auth_email">Email</string>
     <string name="auth_password">Password</string>

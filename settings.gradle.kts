@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "FitnessHub"
 include(":app")
 include(":server")
+include(":shared")

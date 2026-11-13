@@ -21,6 +21,12 @@ data class AuthUser(val uid: String, val email: String?)
 /** Why a sign-in action failed, in terms the UI can explain. */
 enum class AuthError { NotConfigured, InvalidCredentials, EmailInUse, WeakPassword, InvalidEmail, Network, TooManyRequests, Unknown }
 
+/** Gives the current user's Firebase ID token; the API client needs nothing else from sign-in. */
+fun interface TokenProvider {
+    /** Null when nobody is signed in. [forceRefresh] asks Firebase for a new token even if the old one looks valid. */
+    suspend fun idToken(forceRefresh: Boolean): String?
+}
+
 sealed interface AuthResult {
     data object Success : AuthResult
     data class Failure(val error: AuthError) : AuthResult
@@ -31,7 +37,7 @@ sealed interface AuthResult {
  * [auth] is null when the build has no google-services.json; every action then fails with
  * [AuthError.NotConfigured] instead of crashing.
  */
-class AuthRepository(private val auth: FirebaseAuth?) {
+class AuthRepository(private val auth: FirebaseAuth?) : TokenProvider {
 
     val isConfigured: Boolean get() = auth != null
 
@@ -69,10 +75,12 @@ class AuthRepository(private val auth: FirebaseAuth?) {
     }
 
     /**
-     * A Firebase ID token (a signed JWT) proving who the user is; the app sends it to our server,
-     * which checks it (step C4). Firebase refreshes it when it is about to expire.
+     * A Firebase ID token (a signed JWT, valid one hour) proving who the user is; the app sends it
+     * to our server, which checks it. Firebase keeps it cached and renews it when it is about to
+     * expire, or right away with [forceRefresh].
      */
-    suspend fun idToken(): String? = auth?.currentUser?.getIdToken(false)?.await()?.token
+    override suspend fun idToken(forceRefresh: Boolean): String? =
+        auth?.currentUser?.getIdToken(forceRefresh)?.await()?.token
 
     /** Runs a Firebase action and turns its outcome into an [AuthResult]. Emails are never logged. */
     private suspend fun call(action: String, block: suspend (FirebaseAuth) -> Unit): AuthResult {

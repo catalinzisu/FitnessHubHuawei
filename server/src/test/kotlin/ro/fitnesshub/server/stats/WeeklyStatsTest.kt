@@ -1,7 +1,7 @@
 package ro.fitnesshub.server.stats
 
-import ro.fitnesshub.server.WorkoutResponse
-import ro.fitnesshub.server.WorkoutSetDto
+import ro.fitnesshub.api.WorkoutResponse
+import ro.fitnesshub.api.WorkoutSetDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId

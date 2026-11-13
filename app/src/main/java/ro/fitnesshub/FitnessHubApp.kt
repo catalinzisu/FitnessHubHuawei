@@ -12,6 +12,7 @@ import ro.fitnesshub.data.GymRepository
 import ro.fitnesshub.data.HealthRepository
 import ro.fitnesshub.data.auth.AuthRepository
 import ro.fitnesshub.data.auth.SignInChoice
+import ro.fitnesshub.data.remote.FitnessApi
 import ro.fitnesshub.data.db.AppDatabase
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.SeedDataWriter
@@ -73,6 +74,9 @@ class AppContainer(context: Context) {
         AuthRepository(if (firebaseConfigured) FirebaseAuth.getInstance() else null)
     }
     val signInChoice: SignInChoice by lazy { SignInChoice(appContext) }
+
+    /** Our Ktor server; the address comes from local.properties through BuildConfig. */
+    val fitnessApi: FitnessApi by lazy { FitnessApi(BuildConfig.SERVER_URL, authRepository) }
 
     /** Decides the first screen when the app starts (see SignInChoice.startsAtSignIn). */
     fun startsAtSignIn(): Boolean = SignInChoice.startsAtSignIn(

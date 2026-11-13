@@ -10,9 +10,9 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import ro.fitnesshub.server.WorkoutRequest
-import ro.fitnesshub.server.WorkoutResponse
-import ro.fitnesshub.server.WorkoutSetDto
+import ro.fitnesshub.api.WorkoutRequest
+import ro.fitnesshub.api.WorkoutResponse
+import ro.fitnesshub.api.WorkoutSetDto
 
 /** Result of an upload: the stored workout, and whether it is new (false = it was already there). */
 data class UploadResult(val workout: WorkoutResponse, val created: Boolean)
