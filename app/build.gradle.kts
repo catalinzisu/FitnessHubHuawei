@@ -6,6 +6,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Firebase reads its project settings from app/google-services.json, downloaded from the
+// Firebase console. The file is not in git, so the plugin only runs when it is there:
+// without it (e.g. on CI) the app still builds, and sign-in reports "not configured".
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+}
+
 android {
     namespace = "ro.fitnesshub"
     compileSdk = 37
@@ -71,6 +78,9 @@ dependencies {
 
     implementation(libs.androidx.health.connect)
     implementation(libs.androidx.work.runtime)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
 
     testImplementation(libs.junit)
     testImplementation(libs.org.json)

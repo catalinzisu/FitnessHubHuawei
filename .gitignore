@@ -31,3 +31,6 @@ data/
 
 # Server database file (created by ./gradlew :server:run)
 server/db/
+
+# Firebase project settings (download from the Firebase console, never commit)
+google-services.json

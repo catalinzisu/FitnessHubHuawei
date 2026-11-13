@@ -2,6 +2,7 @@ package ro.fitnesshub
 
 import android.app.Application
 import android.content.Context
+import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +27,14 @@ class FitnessHubApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        AppLog.i(
+            "Startup",
+            if (container.firebaseConfigured) {
+                "Firebase configured (project ${FirebaseApp.getInstance().options.projectId})"
+            } else {
+                "Firebase not configured: app/google-services.json is missing, sign-in is off"
+            },
+        )
         SyncWorker.schedule(this)
         appScope.launch {
             try {
@@ -50,4 +59,10 @@ class AppContainer(context: Context) {
     val healthSync: HealthSync by lazy { HealthSync(healthRepository, gymRepository) }
     val seedDataWriter: SeedDataWriter by lazy { SeedDataWriter(appContext) }
     val haptics: Haptics by lazy { Haptics(appContext) }
+
+    /**
+     * True when the build included app/google-services.json. Firebase then starts by itself
+     * before onCreate; without it, any Firebase call would crash, so callers check this first.
+     */
+    val firebaseConfigured: Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
 }
