@@ -11,6 +11,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
+import ro.fitnesshub.server.db.AppDatabase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -18,20 +19,22 @@ import kotlin.test.assertTrue
 /** Runs the real [module] in memory (no network) and calls it like the app would. */
 class ApplicationTest {
 
+    private fun testDatabase() = AppDatabase.inMemory("app-test-${System.nanoTime()}")
+
     @Test
     fun health_returnsOk() = testApplication {
-        application { module() }
+        application { module(testDatabase()) }
 
         val response = client.get("/health")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertTrue(response.contentType()!!.match(ContentType.Application.Json))
-        assertEquals(HealthResponse("ok", SERVER_VERSION), Json.decodeFromString(response.bodyAsText()))
+        assertEquals(HealthResponse("ok", SERVER_VERSION, database = "ok"), Json.decodeFromString(response.bodyAsText()))
     }
 
     @Test
     fun unknownRoute_returnsJson404() = testApplication {
-        application { module() }
+        application { module(testDatabase()) }
 
         val response = client.get("/does-not-exist")
 
@@ -43,7 +46,7 @@ class ApplicationTest {
     @Test
     fun thrownErrors_becomeJsonWithTheRightStatus() = testApplication {
         application {
-            module()
+            module(testDatabase())
             // Test-only routes that fail on purpose.
             routing {
                 get("/test/bad") { throw BadRequestException("reps must be 1-100") }

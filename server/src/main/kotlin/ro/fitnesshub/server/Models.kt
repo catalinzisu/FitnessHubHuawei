@@ -8,4 +8,4 @@ data class ErrorResponse(val error: String, val message: String)
 
 /** Body of `GET /health`. */
 @Serializable
-data class HealthResponse(val status: String, val version: String)
+data class HealthResponse(val status: String, val version: String, val database: String)

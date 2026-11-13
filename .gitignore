@@ -28,3 +28,6 @@ huawei-export/
 
 # Huawei Health export (personal data, never commit)
 data/
+
+# Server database file (created by ./gradlew :server:run)
+server/db/

@@ -17,6 +17,9 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.status.pages)
+    implementation(libs.exposed.core) // SQL from Kotlin code (tables, queries)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.h2) // the database itself: a single file, no install needed
     implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)
