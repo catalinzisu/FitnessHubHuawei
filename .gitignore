@@ -26,8 +26,9 @@ huawei-export/
 *.log
 *.mp4
 
-# Huawei Health export (personal data, never commit)
-data/
+# Huawei Health export (personal data, never commit). The leading slash limits it to the
+# folder in the project root; without it, the app's own data/ code packages were ignored too.
+/data/
 
 # Server database file (created by ./gradlew :server:run)
 server/db/
