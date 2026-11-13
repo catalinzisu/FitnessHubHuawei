@@ -12,6 +12,7 @@ import ro.fitnesshub.server.db.TemplateRepository
 import ro.fitnesshub.server.db.UserRepository
 import ro.fitnesshub.server.db.WorkoutRepository
 import ro.fitnesshub.server.routes.profileRoutes
+import ro.fitnesshub.server.routes.statsRoutes
 import ro.fitnesshub.server.routes.templateRoutes
 import ro.fitnesshub.server.routes.workoutRoutes
 
@@ -19,7 +20,7 @@ const val SERVER_VERSION = "0.1.0"
 
 /**
  * All HTTP routes. Routes only read the request, call a repository and send the answer;
- * the SQL lives in the repositories (db package).
+ * the SQL lives in the repositories (db package) and the calculations in the stats package.
  */
 fun Application.configureRouting(database: AppDatabase) {
     val users = UserRepository(database)
@@ -46,6 +47,7 @@ fun Application.configureRouting(database: AppDatabase) {
             profileRoutes(users, profiles)
             templateRoutes(users, templates)
             workoutRoutes(users, workouts)
+            statsRoutes(users, profiles, workouts)
         }
     }
 }

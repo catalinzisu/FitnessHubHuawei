@@ -87,3 +87,42 @@ data class WorkoutResponse(
     val kcal: Double? = null,
     val sets: List<WorkoutSetDto> = emptyList(),
 )
+
+// ---- Weekly stats ----
+
+/** GET /api/stats/weekly: one entry per calendar week (Monday to Sunday), oldest first. */
+@Serializable
+data class WeeklyStatsResponse(
+    /** Workouts per week the user aims for (from the profile), if set. */
+    val weeklyGoal: Int? = null,
+    val weeks: List<WeekStats>,
+)
+
+@Serializable
+data class WeekStats(
+    /** The Monday that starts the week, e.g. "2026-11-09". */
+    val weekStart: String,
+    val workouts: Int,
+    /** Null when the user has no weekly goal. */
+    val goalMet: Boolean? = null,
+    /** Sum of weight × reps over working sets (warm-ups don't count). */
+    val totalVolumeKg: Double,
+    /** Volume per main muscle, biggest first. */
+    val volumeByMuscle: List<MuscleVolume>,
+    /** New personal records set this week, at most one per exercise. */
+    val personalRecords: List<PersonalRecord>,
+)
+
+@Serializable
+data class MuscleVolume(val muscle: String, val volumeKg: Double, val workingSets: Int)
+
+@Serializable
+data class PersonalRecord(
+    val exerciseName: String,
+    val weightKg: Double,
+    val reps: Int,
+    /** Estimated one-rep max (Epley); null above 12 reps, where the formula isn't reliable. */
+    val estimated1RmKg: Double? = null,
+    /** Day of the workout, e.g. "2026-11-12". */
+    val date: String,
+)
