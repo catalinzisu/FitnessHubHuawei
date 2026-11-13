@@ -21,7 +21,7 @@ Legendă: **C1–C9** = criteriile din barem.
 - [x] A1. Toate dependențele la ultima versiune minoră: Gradle 9, AGP 9, Kotlin 2.4, KSP, Compose BOM, Navigation, Lifecycle, Activity, Core, Room, WorkManager
 - [x] A2. Navigație type-safe: rute `@Serializable` în loc de rute text, argumente cu `toRoute()` (C4)
 - [x] A3. Back stack: tab-uri fără duplicate, `launchSingleTop`, „close” sigur (C4)
-- [ ] A4. Editare set (Update) → CRUD complet pe seturi (C5)
+- [x] A4. Editare set (Update) → CRUD complet pe seturi (C5)
 - [ ] A5. ViewModel-urile în fișiere separate; evenimente one-shot prin stare, nu callback-uri (C3)
 
 ## Faza B – Server Ktor (17–23 nov) – C6

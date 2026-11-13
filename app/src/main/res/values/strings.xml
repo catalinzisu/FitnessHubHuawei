@@ -3,6 +3,7 @@
     <string name="app_name">Fitness Hub</string>
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
     <string name="refresh">Refresh</string>
     <string name="no_data">—</string>
 
@@ -124,6 +125,7 @@
     <string name="session_rpe">RPE</string>
     <string name="session_warmup">Warm-up</string>
     <string name="session_log_set">Log set</string>
+    <string name="session_edit_set">Edit set</string>
     <string name="session_add_exercise">Add exercise</string>
     <string name="session_empty">Add the exercises you are doing.</string>
     <string name="session_finished_on">%1$s · %2$s</string>

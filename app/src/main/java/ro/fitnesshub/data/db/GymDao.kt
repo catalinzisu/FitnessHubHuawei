@@ -230,6 +230,10 @@ abstract class GymDao {
     open suspend fun logSet(set: SetEntryEntity): Long =
         insertSet(set.copy(setNumber = nextSetNumber(set.sessionId, set.exerciseId)))
 
+    /** Fixes a typo in a logged set. Its number, exercise and time stay the same. */
+    @Query("UPDATE set_entry SET weightKg = :weightKg, reps = :reps, rpe = :rpe, isWarmup = :isWarmup WHERE id = :id")
+    abstract suspend fun updateSet(id: Long, weightKg: Double, reps: Int, rpe: Double?, isWarmup: Boolean)
+
     @Query("DELETE FROM set_entry WHERE id = :id")
     abstract suspend fun deleteSet(id: Long)
 

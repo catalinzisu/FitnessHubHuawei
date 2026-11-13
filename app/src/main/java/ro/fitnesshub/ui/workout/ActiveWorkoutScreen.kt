@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -181,6 +183,7 @@ fun ActiveWorkoutScreen(
                     readOnly = readOnly,
                     onOpenProgress = { onOpenExercise(block.exerciseId) },
                     onLog = { weight, reps, rpe, warmup -> viewModel.logSet(block.exerciseId, weight, reps, rpe, warmup) },
+                    onEditSet = viewModel::startEdit,
                     onDeleteSet = viewModel::deleteSet,
                     onRemove = { viewModel.removeExercise(block.exerciseId) },
                 )
@@ -194,6 +197,10 @@ fun ActiveWorkoutScreen(
                 }
             }
         }
+    }
+
+    state.editing?.let { edit ->
+        EditSetDialog(edit, onSave = viewModel::saveEdit, onDismiss = viewModel::cancelEdit)
     }
 
     confirm?.let { action ->
@@ -248,6 +255,7 @@ private fun ExerciseCard(
     readOnly: Boolean,
     onOpenProgress: () -> Unit,
     onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Boolean,
+    onEditSet: (SetEntryEntity) -> Unit,
     onDeleteSet: (Long) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -292,7 +300,13 @@ private fun ExerciseCard(
             }
 
             block.sets.forEach { set ->
-                SetRow(set, readOnly, isPr = set.id in block.prSetIds, onDelete = { onDeleteSet(set.id) })
+                SetRow(
+                    set = set,
+                    readOnly = readOnly,
+                    isPr = set.id in block.prSetIds,
+                    onEdit = { onEditSet(set) },
+                    onDelete = { onDeleteSet(set.id) },
+                )
             }
 
             if (!readOnly) {
@@ -313,8 +327,12 @@ private fun hintText(hint: Progression.Hint): String {
 }
 
 @Composable
-private fun SetRow(set: SetEntryEntity, readOnly: Boolean, isPr: Boolean, onDelete: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun SetRow(set: SetEntryEntity, readOnly: Boolean, isPr: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
+    // Tapping a set of an unfinished workout opens the edit dialog.
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable(enabled = !readOnly, onClick = onEdit),
+    ) {
         Text(
             if (set.isWarmup) stringResource(R.string.session_set_warmup) else set.setNumber.toString(),
             style = MaterialTheme.typography.labelLarge,
@@ -396,6 +414,67 @@ private fun SetInput(
             }
         }
     }
+}
+
+/** Dialog that fixes a logged set. The text fields survive rotation; the error comes from the ViewModel. */
+@Composable
+private fun EditSetDialog(
+    edit: SetEditState,
+    onSave: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val set = edit.set
+    var weight by rememberSaveable(set.id) { mutableStateOf(WorkoutFormat.formatWeight(set.weightKg)) }
+    var reps by rememberSaveable(set.id) { mutableStateOf(set.reps.toString()) }
+    var rpe by rememberSaveable(set.id) { mutableStateOf(set.rpe?.let(WorkoutFormat::formatWeight).orEmpty()) }
+    var warmup by rememberSaveable(set.id) { mutableStateOf(set.isWarmup) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.session_edit_set)) },
+        text = {
+            // Scrolls in landscape, where the dialog is short.
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
+                OutlinedTextField(
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = { Text(stringResource(R.string.session_weight)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                )
+                OutlinedTextField(
+                    value = reps,
+                    onValueChange = { reps = it },
+                    label = { Text(stringResource(R.string.session_reps)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                OutlinedTextField(
+                    value = rpe,
+                    onValueChange = { rpe = it },
+                    label = { Text(stringResource(R.string.session_rpe)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = warmup, onCheckedChange = { warmup = it })
+                    Text(stringResource(R.string.session_warmup))
+                }
+                edit.error?.let {
+                    Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(weight, reps, rpe, warmup) }) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }
 
 @Composable

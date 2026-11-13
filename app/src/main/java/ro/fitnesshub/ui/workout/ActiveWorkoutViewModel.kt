@@ -1,5 +1,6 @@
 package ro.fitnesshub.ui.workout
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -27,7 +28,8 @@ import ro.fitnesshub.data.db.SetEntryEntity
 import ro.fitnesshub.data.db.WorkoutSessionEntity
 import ro.fitnesshub.gym.LiftSet
 import ro.fitnesshub.gym.Progression
-import ro.fitnesshub.gym.RpeInput
+import ro.fitnesshub.gym.SetField
+import ro.fitnesshub.gym.SetInput
 import ro.fitnesshub.gym.SetSuggestions
 import ro.fitnesshub.gym.WorkoutFormat
 import ro.fitnesshub.ui.common.UiMessage
@@ -60,6 +62,9 @@ private data class ExerciseHistory(
 
 data class RestTimerState(val remainingSeconds: Int, val totalSeconds: Int)
 
+/** The set open in the edit dialog. [error] is the message of the last failed save, if any. */
+data class SetEditState(val set: SetEntryEntity, @param:StringRes val error: Int? = null)
+
 data class ActiveWorkoutUiState(
     val loading: Boolean = true,
     val session: WorkoutSessionEntity? = null,
@@ -68,6 +73,7 @@ data class ActiveWorkoutUiState(
     val rest: RestTimerState? = null,
     val message: UiMessage? = null,
     val closed: Boolean = false,
+    val editing: SetEditState? = null,
 ) {
     /** Finished sessions are shown as history and can't be edited. */
     val readOnly: Boolean get() = session?.endedAt != null
@@ -78,6 +84,7 @@ private data class Extras(
     val message: UiMessage?,
     val closed: Boolean,
     val title: String?,
+    val editing: SetEditState?,
 )
 
 class ActiveWorkoutViewModel(
@@ -93,9 +100,10 @@ class ActiveWorkoutViewModel(
     private val message = MutableStateFlow<UiMessage?>(null)
     private val closed = MutableStateFlow(false)
     private val title = MutableStateFlow<String?>(null)
+    private val editing = MutableStateFlow<SetEditState?>(null)
     private var restJob: Job? = null
 
-    private val extras = combine(rest, message, closed, title, ::Extras)
+    private val extras = combine(rest, message, closed, title, editing, ::Extras)
 
     val state: StateFlow<ActiveWorkoutUiState> = combine(
         repository.observeSession(sessionId),
@@ -111,6 +119,7 @@ class ActiveWorkoutViewModel(
             blocks = buildBlocks(exercises, sets, histories),
             rest = extra.rest,
             message = extra.message,
+            editing = extra.editing,
             // A deleted session also closes the screen.
             closed = extra.closed || session == null,
         )
@@ -182,19 +191,14 @@ class ActiveWorkoutViewModel(
 
     /** Validates the inputs and logs a set. Returns true if it was saved. */
     fun logSet(exerciseId: Long, weightText: String, repsText: String, rpeText: String, isWarmup: Boolean): Boolean {
-        val weight = WorkoutFormat.parseWeight(weightText)
-            ?: return fail(R.string.session_invalid_weight)
-        val reps = WorkoutFormat.parseReps(repsText)
-            ?: return fail(R.string.session_invalid_reps)
-        val rpe = when (val parsed = WorkoutFormat.parseRpe(rpeText)) {
-            RpeInput.Empty -> null
-            RpeInput.Invalid -> return fail(R.string.session_invalid_rpe)
-            is RpeInput.Value -> parsed.rpe
+        val input = when (val parsed = WorkoutFormat.parseSet(weightText, repsText, rpeText)) {
+            is SetInput.Invalid -> return fail(errorText(parsed.field))
+            is SetInput.Valid -> parsed
         }
         viewModelScope.launch {
-            repository.logSet(sessionId, exerciseId, weight, reps, rpe, isWarmup)
+            repository.logSet(sessionId, exerciseId, input.weightKg, input.reps, input.rpe, isWarmup)
         }
-        if (!isWarmup && isNewPr(exerciseId, LiftSet(weight, reps))) {
+        if (!isWarmup && isNewPr(exerciseId, LiftSet(input.weightKg, input.reps))) {
             message.value = UiMessage(R.string.session_new_pr)
         }
         if (!isWarmup) {
@@ -217,6 +221,37 @@ class ActiveWorkoutViewModel(
     private fun fail(text: Int): Boolean {
         message.value = UiMessage(text)
         return false
+    }
+
+    private fun errorText(field: SetField): Int = when (field) {
+        SetField.Weight -> R.string.session_invalid_weight
+        SetField.Reps -> R.string.session_invalid_reps
+        SetField.Rpe -> R.string.session_invalid_rpe
+    }
+
+    // ---- Editing a logged set (the "Update" in CRUD) ----
+
+    /** Opens the edit dialog for [set]. Finished workouts are history and can't be changed. */
+    fun startEdit(set: SetEntryEntity) {
+        if (!state.value.readOnly) editing.value = SetEditState(set)
+    }
+
+    fun cancelEdit() {
+        editing.value = null
+    }
+
+    /** Saves the dialog's values, or keeps the dialog open with an error if they are invalid. */
+    fun saveEdit(weightText: String, repsText: String, rpeText: String, isWarmup: Boolean) {
+        val edit = editing.value ?: return
+        when (val input = WorkoutFormat.parseSet(weightText, repsText, rpeText)) {
+            is SetInput.Invalid -> editing.value = edit.copy(error = errorText(input.field))
+            is SetInput.Valid -> {
+                editing.value = null
+                viewModelScope.launch {
+                    repository.updateSet(edit.set.id, input.weightKg, input.reps, input.rpe, isWarmup)
+                }
+            }
+        }
     }
 
     fun deleteSet(id: Long) {

@@ -42,6 +42,15 @@ class WorkoutFormatTest {
     }
 
     @Test
+    fun parseSet_validOrFirstWrongField() {
+        assertEquals(SetInput.Valid(77.5, 8, null), WorkoutFormat.parseSet("77,5", "8", ""))
+        assertEquals(SetInput.Valid(80.0, 5, 9.0), WorkoutFormat.parseSet("80", "5", "9"))
+        assertEquals(SetInput.Invalid(SetField.Weight), WorkoutFormat.parseSet("", "x", "x"))
+        assertEquals(SetInput.Invalid(SetField.Reps), WorkoutFormat.parseSet("80", "0", ""))
+        assertEquals(SetInput.Invalid(SetField.Rpe), WorkoutFormat.parseSet("80", "5", "12"))
+    }
+
+    @Test
     fun formatWeight_dropsTrailingZeros() {
         assertEquals("80", WorkoutFormat.formatWeight(80.0))
         assertEquals("77.5", WorkoutFormat.formatWeight(77.5))

@@ -120,6 +120,9 @@ class GymRepository(
         )
     }
 
+    suspend fun updateSet(id: Long, weightKg: Double, reps: Int, rpe: Double?, isWarmup: Boolean) =
+        dao.updateSet(id, weightKg, reps, rpe, isWarmup)
+
     suspend fun deleteSet(id: Long) = dao.deleteSet(id)
 
     suspend fun previousSets(exerciseId: Long, currentSessionId: Long): List<SetEntryEntity> =

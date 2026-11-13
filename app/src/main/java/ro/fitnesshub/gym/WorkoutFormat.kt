@@ -28,6 +28,18 @@ object WorkoutFormat {
         return if (value in 1.0..10.0 && validStep) RpeInput.Value(value) else RpeInput.Invalid
     }
 
+    /** Checks the three text fields of a set (used both when logging and when editing a set). */
+    fun parseSet(weightText: String, repsText: String, rpeText: String): SetInput {
+        val weight = parseWeight(weightText) ?: return SetInput.Invalid(SetField.Weight)
+        val reps = parseReps(repsText) ?: return SetInput.Invalid(SetField.Reps)
+        val rpe = when (val parsed = parseRpe(rpeText)) {
+            RpeInput.Empty -> null
+            RpeInput.Invalid -> return SetInput.Invalid(SetField.Rpe)
+            is RpeInput.Value -> parsed.rpe
+        }
+        return SetInput.Valid(weight, reps, rpe)
+    }
+
     /** 80.0 → "80", 77.5 → "77.5", 33.25 → "33.25". */
     fun formatWeight(kg: Double): String {
         val rounded = (kg * 100).roundToLong() / 100.0
@@ -79,3 +91,11 @@ sealed interface RpeInput {
     data object Invalid : RpeInput
     data class Value(val rpe: Double) : RpeInput
 }
+
+/** Result of [WorkoutFormat.parseSet]: the numbers, or the first field that is wrong. */
+sealed interface SetInput {
+    data class Valid(val weightKg: Double, val reps: Int, val rpe: Double?) : SetInput
+    data class Invalid(val field: SetField) : SetInput
+}
+
+enum class SetField { Weight, Reps, Rpe }
