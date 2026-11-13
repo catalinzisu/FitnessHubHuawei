@@ -38,6 +38,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -53,6 +54,7 @@ import ro.fitnesshub.gym.Progression
 import ro.fitnesshub.gym.WorkoutFormat
 import ro.fitnesshub.ui.common.ChartKind
 import ro.fitnesshub.ui.common.SimpleChart
+import ro.fitnesshub.ui.navigation.ExerciseProgressRoute
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -71,7 +73,7 @@ class ExerciseProgressViewModel(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val exerciseId: Long = savedStateHandle.get<Long>(ARG_EXERCISE_ID) ?: 0L
+    private val exerciseId: Long = savedStateHandle.toRoute<ExerciseProgressRoute>().exerciseId
 
     val state: StateFlow<ExerciseProgressUiState> = combine(
         flow { emit(repository.getExercise(exerciseId)) },
@@ -94,8 +96,6 @@ class ExerciseProgressViewModel(
             }
 
     companion object {
-        const val ARG_EXERCISE_ID = "exerciseId"
-
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp

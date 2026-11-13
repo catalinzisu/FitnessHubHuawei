@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // Generates serializers for the @Serializable navigation routes (ui/navigation/Routes.kt).
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
 

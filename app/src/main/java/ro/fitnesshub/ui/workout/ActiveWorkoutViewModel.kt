@@ -7,6 +7,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.toRoute
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ import ro.fitnesshub.gym.RpeInput
 import ro.fitnesshub.gym.SetSuggestions
 import ro.fitnesshub.gym.WorkoutFormat
 import ro.fitnesshub.ui.common.UiMessage
+import ro.fitnesshub.ui.navigation.SessionRoute
 import ro.fitnesshub.util.Haptics
 
 data class ExerciseBlock(
@@ -84,7 +86,7 @@ class ActiveWorkoutViewModel(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val sessionId: Long = savedStateHandle.get<Long>(ARG_SESSION_ID) ?: 0L
+    private val sessionId: Long = savedStateHandle.toRoute<SessionRoute>().sessionId
 
     private val history = MutableStateFlow<Map<Long, ExerciseHistory>>(emptyMap())
     private val rest = MutableStateFlow<RestTimerState?>(null)
@@ -282,8 +284,6 @@ class ActiveWorkoutViewModel(
     }
 
     companion object {
-        const val ARG_SESSION_ID = "sessionId"
-
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp

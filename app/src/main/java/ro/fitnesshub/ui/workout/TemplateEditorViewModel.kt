@@ -7,6 +7,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,7 @@ import ro.fitnesshub.data.GymRepository
 import ro.fitnesshub.data.db.TemplateExerciseEntity
 import ro.fitnesshub.data.db.WorkoutTemplateEntity
 import ro.fitnesshub.gym.WorkoutFormat
+import ro.fitnesshub.ui.navigation.TemplateEditorRoute
 import java.time.DayOfWeek
 
 data class TemplateItem(
@@ -45,7 +47,7 @@ class TemplateEditorViewModel(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val templateId: Long = savedStateHandle.get<Long>(ARG_TEMPLATE_ID) ?: 0L
+    private val templateId: Long = savedStateHandle.toRoute<TemplateEditorRoute>().templateId
 
     private val _state = MutableStateFlow(TemplateEditorUiState(isNew = templateId == 0L))
     val state: StateFlow<TemplateEditorUiState> = _state.asStateFlow()
@@ -174,8 +176,6 @@ class TemplateEditorViewModel(
     }
 
     companion object {
-        const val ARG_TEMPLATE_ID = "templateId"
-
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as FitnessHubApp

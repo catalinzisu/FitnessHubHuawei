@@ -20,13 +20,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import ro.fitnesshub.R
 import ro.fitnesshub.ui.common.ComingSoonScreen
 import ro.fitnesshub.ui.dashboard.DashboardScreen
@@ -34,68 +36,39 @@ import ro.fitnesshub.ui.log.LogScreen
 import ro.fitnesshub.ui.privacy.PrivacyPolicyScreen
 import ro.fitnesshub.ui.settings.SettingsScreen
 import ro.fitnesshub.ui.workout.ActiveWorkoutScreen
-import ro.fitnesshub.ui.workout.ActiveWorkoutViewModel
 import ro.fitnesshub.ui.workout.ExerciseLibraryScreen
 import ro.fitnesshub.ui.workout.ExerciseProgressScreen
-import ro.fitnesshub.ui.workout.ExerciseProgressViewModel
 import ro.fitnesshub.ui.workout.TemplateEditorScreen
-import ro.fitnesshub.ui.workout.TemplateEditorViewModel
 import ro.fitnesshub.ui.workout.WorkoutHomeScreen
 
-private enum class TopDestination(val route: String, @param:StringRes val label: Int, val icon: ImageVector) {
-    Today("today", R.string.nav_today, Icons.Filled.Home),
-    Workout("workout", R.string.nav_workout, Icons.AutoMirrored.Filled.List),
-    Coach("coach", R.string.nav_coach, Icons.Filled.Face),
-    Settings("settings", R.string.nav_settings, Icons.Filled.Settings),
-}
-
-private object Routes {
-    const val LOG = "log"
-    const val PRIVACY = "privacy"
-    const val EXERCISES = "exercises?pick={pick}"
-    const val TEMPLATE = "template/{${TemplateEditorViewModel.ARG_TEMPLATE_ID}}"
-    const val SESSION = "session/{${ActiveWorkoutViewModel.ARG_SESSION_ID}}"
-    const val PROGRESS = "progress/{${ExerciseProgressViewModel.ARG_EXERCISE_ID}}"
-
-    fun exercises(pick: Boolean) = "exercises?pick=$pick"
-    fun template(id: Long) = "template/$id"
-    fun session(id: Long) = "session/$id"
-    fun progress(exerciseId: Long) = "progress/$exerciseId"
+/** The bottom tabs. [graph] is the nested navigation graph that holds all screens of the tab. */
+private enum class TopDestination(val graph: Any, @param:StringRes val label: Int, val icon: ImageVector) {
+    Today(TodayGraph, R.string.nav_today, Icons.Filled.Home),
+    Workout(WorkoutGraph, R.string.nav_workout, Icons.AutoMirrored.Filled.List),
+    Coach(CoachGraph, R.string.nav_coach, Icons.Filled.Face),
+    Settings(SettingsGraph, R.string.nav_settings, Icons.Filled.Settings),
 }
 
 /** Key used to hand a picked exercise back to the screen that opened the picker. */
 private const val PICKED_EXERCISE = "picked_exercise_id"
 
-/** Which bottom tab a route belongs to, so the tab stays highlighted on nested screens. */
-private fun tabOf(route: String?): TopDestination? = when {
-    route == null -> null
-    route.startsWith("exercises") || route.startsWith("template") || route.startsWith("session") ||
-        route.startsWith("progress") -> TopDestination.Workout
-    route == Routes.LOG || route == Routes.PRIVACY -> TopDestination.Settings
-    else -> TopDestination.entries.firstOrNull { it.route == route }
-}
-
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentTab = tabOf(backStackEntry?.destination?.route)
+    val currentDestination = backStackEntry?.destination
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                TopDestination.entries.forEach { destination ->
+                TopDestination.entries.forEach { tab ->
+                    // A tab stays selected on every screen inside its graph (e.g. a workout opened from the Workout tab).
+                    val selected = currentDestination?.hierarchy?.any { it.hasRoute(tab.graph::class) } == true
                     NavigationBarItem(
-                        selected = currentTab == destination,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = null) },
-                        label = { Text(stringResource(destination.label)) },
+                        selected = selected,
+                        onClick = { navController.navigateToTab(tab) },
+                        icon = { Icon(tab.icon, contentDescription = null) },
+                        label = { Text(stringResource(tab.label)) },
                     )
                 }
             }
@@ -105,83 +78,101 @@ fun AppNavHost() {
         // so only the bottom bar's space is reserved here.
         NavHost(
             navController = navController,
-            startDestination = TopDestination.Today.route,
+            startDestination = TodayGraph,
             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
         ) {
-            composable(TopDestination.Today.route) { DashboardScreen() }
-
-            composable(TopDestination.Workout.route) {
-                WorkoutHomeScreen(
-                    onOpenSession = { navController.navigate(Routes.session(it)) },
-                    onEditTemplate = { navController.navigate(Routes.template(it)) },
-                    onOpenLibrary = { navController.navigate(Routes.exercises(pick = false)) },
-                )
+            navigation<TodayGraph>(startDestination = TodayRoute) {
+                composable<TodayRoute> { DashboardScreen() }
             }
 
-            composable(
-                Routes.EXERCISES,
-                arguments = listOf(navArgument("pick") { type = NavType.BoolType; defaultValue = false }),
-            ) { entry ->
-                ExerciseLibraryScreen(
-                    pickMode = entry.arguments?.getBoolean("pick") ?: false,
-                    onBack = { navController.popBackStack() },
-                    onOpenExercise = { navController.navigate(Routes.progress(it)) },
-                    onPicked = { id ->
-                        navController.previousBackStackEntry?.savedStateHandle?.set(PICKED_EXERCISE, id)
-                        navController.popBackStack()
-                    },
-                )
+            navigation<WorkoutGraph>(startDestination = WorkoutHomeRoute) {
+                composable<WorkoutHomeRoute> {
+                    WorkoutHomeScreen(
+                        onOpenSession = { navController.navigateOrReturn(SessionRoute(it)) },
+                        onEditTemplate = { navController.navigate(TemplateEditorRoute(it)) { launchSingleTop = true } },
+                        onOpenLibrary = { navController.navigate(ExerciseLibraryRoute(pick = false)) { launchSingleTop = true } },
+                    )
+                }
+
+                composable<ExerciseLibraryRoute> { entry ->
+                    val route = entry.toRoute<ExerciseLibraryRoute>()
+                    ExerciseLibraryScreen(
+                        pickMode = route.pick,
+                        onBack = { navController.popBackStackOnce(entry) },
+                        onOpenExercise = { navController.navigateOrReturn(ExerciseProgressRoute(it)) },
+                        onPicked = { id ->
+                            navController.previousBackStackEntry?.savedStateHandle?.set(PICKED_EXERCISE, id)
+                            navController.popBackStackOnce(entry)
+                        },
+                    )
+                }
+
+                composable<TemplateEditorRoute> { entry ->
+                    val picked by pickedExercise(entry)
+                    TemplateEditorScreen(
+                        pickedExerciseId = picked,
+                        onPickedConsumed = { entry.savedStateHandle[PICKED_EXERCISE] = null },
+                        onAddExercise = { navController.navigate(ExerciseLibraryRoute(pick = true)) { launchSingleTop = true } },
+                        onClose = { navController.popBackStackOnce(entry) },
+                    )
+                }
+
+                composable<SessionRoute> { entry ->
+                    val picked by pickedExercise(entry)
+                    ActiveWorkoutScreen(
+                        pickedExerciseId = picked,
+                        onPickedConsumed = { entry.savedStateHandle[PICKED_EXERCISE] = null },
+                        onAddExercise = { navController.navigate(ExerciseLibraryRoute(pick = true)) { launchSingleTop = true } },
+                        onOpenExercise = { navController.navigateOrReturn(ExerciseProgressRoute(it)) },
+                        onClose = { navController.popBackStackOnce(entry) },
+                    )
+                }
+
+                composable<ExerciseProgressRoute> { entry ->
+                    ExerciseProgressScreen(
+                        onBack = { navController.popBackStackOnce(entry) },
+                        onOpenSession = { navController.navigateOrReturn(SessionRoute(it)) },
+                    )
+                }
             }
 
-            composable(
-                Routes.TEMPLATE,
-                arguments = listOf(navArgument(TemplateEditorViewModel.ARG_TEMPLATE_ID) { type = NavType.LongType }),
-            ) { entry ->
-                val picked by pickedExercise(entry)
-                TemplateEditorScreen(
-                    pickedExerciseId = picked,
-                    onPickedConsumed = { entry.savedStateHandle[PICKED_EXERCISE] = null },
-                    onAddExercise = { navController.navigate(Routes.exercises(pick = true)) },
-                    onClose = { navController.popBackStackOnce(entry) },
-                )
+            navigation<CoachGraph>(startDestination = CoachRoute) {
+                composable<CoachRoute> { ComingSoonScreen(R.string.nav_coach, R.string.coming_soon_coach) }
             }
 
-            composable(
-                Routes.SESSION,
-                arguments = listOf(navArgument(ActiveWorkoutViewModel.ARG_SESSION_ID) { type = NavType.LongType }),
-            ) { entry ->
-                val picked by pickedExercise(entry)
-                ActiveWorkoutScreen(
-                    pickedExerciseId = picked,
-                    onPickedConsumed = { entry.savedStateHandle[PICKED_EXERCISE] = null },
-                    onAddExercise = { navController.navigate(Routes.exercises(pick = true)) },
-                    onOpenExercise = { navController.navigate(Routes.progress(it)) },
-                    onClose = { navController.popBackStackOnce(entry) },
-                )
+            navigation<SettingsGraph>(startDestination = SettingsRoute) {
+                composable<SettingsRoute> {
+                    SettingsScreen(
+                        onOpenLog = { navController.navigate(LogRoute) { launchSingleTop = true } },
+                        onOpenPrivacy = { navController.navigate(PrivacyRoute) { launchSingleTop = true } },
+                    )
+                }
+                composable<LogRoute> { entry -> LogScreen(onBack = { navController.popBackStackOnce(entry) }) }
+                composable<PrivacyRoute> { entry -> PrivacyPolicyScreen(onBack = { navController.popBackStackOnce(entry) }) }
             }
-
-            composable(
-                Routes.PROGRESS,
-                arguments = listOf(navArgument(ExerciseProgressViewModel.ARG_EXERCISE_ID) { type = NavType.LongType }),
-            ) { entry ->
-                ExerciseProgressScreen(
-                    onBack = { navController.popBackStackOnce(entry) },
-                    onOpenSession = { navController.navigate(Routes.session(it)) },
-                )
-            }
-
-            composable(TopDestination.Coach.route) {
-                ComingSoonScreen(R.string.nav_coach, R.string.coming_soon_coach)
-            }
-            composable(TopDestination.Settings.route) {
-                SettingsScreen(
-                    onOpenLog = { navController.navigate(Routes.LOG) },
-                    onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },
-                )
-            }
-            composable(Routes.LOG) { LogScreen(onBack = { navController.popBackStack() }) }
-            composable(Routes.PRIVACY) { PrivacyPolicyScreen(onBack = { navController.popBackStack() }) }
         }
+    }
+}
+
+/**
+ * Switches tab the standard way: pop everything above the start screen (saving it), don't stack the
+ * same tab twice, and restore where the user was inside the tab.
+ */
+private fun NavController.navigateToTab(tab: TopDestination) {
+    navigate(tab.graph) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/**
+ * Goes back to [route] if exactly that screen (same arguments) is already in the back stack,
+ * otherwise opens it. Stops loops like workout → progress → the same workout from piling up.
+ */
+private fun <T : Any> NavController.navigateOrReturn(route: T) {
+    if (!popBackStack(route, inclusive = false)) {
+        navigate(route) { launchSingleTop = true }
     }
 }
 
