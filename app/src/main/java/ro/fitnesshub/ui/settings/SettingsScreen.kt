@@ -45,12 +45,14 @@ import ro.fitnesshub.ui.common.HealthConnectIntents
 fun SettingsScreen(
     onOpenLog: () -> Unit,
     onOpenPrivacy: () -> Unit,
+    onSignIn: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmSeed by rememberSaveable { mutableStateOf(false) }
+    var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract(),
     ) { viewModel.refresh() }
@@ -77,6 +79,24 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
+            when (val account = state.account) {
+                AccountState.NotConfigured -> SettingsRow(
+                    title = stringResource(R.string.settings_account),
+                    description = stringResource(R.string.settings_account_not_configured),
+                    enabled = false,
+                    onClick = {},
+                )
+                AccountState.SignedOut -> SettingsRow(
+                    title = stringResource(R.string.settings_account),
+                    description = stringResource(R.string.settings_account_signed_out),
+                    onClick = onSignIn,
+                )
+                is AccountState.SignedIn -> SettingsRow(
+                    title = stringResource(R.string.settings_account_sign_out),
+                    description = stringResource(R.string.settings_account_signed_in, account.email.orEmpty()),
+                    onClick = { confirmSignOut = true },
+                )
+            }
             SettingsRow(
                 title = stringResource(R.string.settings_hc),
                 description = stringResource(R.string.settings_hc_desc),
@@ -131,6 +151,22 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            text = { Text(stringResource(R.string.settings_sign_out_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmSignOut = false
+                    viewModel.signOut()
+                }) { Text(stringResource(R.string.settings_account_sign_out)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
     }
 
     if (confirmSeed) {

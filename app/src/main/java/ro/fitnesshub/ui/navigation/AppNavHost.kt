@@ -30,6 +30,9 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import ro.fitnesshub.R
+import ro.fitnesshub.ui.auth.LoginScreen
+import ro.fitnesshub.ui.auth.RegisterScreen
+import ro.fitnesshub.ui.auth.ResetPasswordScreen
 import ro.fitnesshub.ui.common.ComingSoonScreen
 import ro.fitnesshub.ui.dashboard.DashboardScreen
 import ro.fitnesshub.ui.log.LogScreen
@@ -57,10 +60,12 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    // The sign-in screens are full screen: no tabs while signing in.
+    val inAuth = currentDestination?.hierarchy?.any { it.hasRoute(AuthGraph::class) } == true
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            if (!inAuth) NavigationBar {
                 TopDestination.entries.forEach { tab ->
                     // A tab stays selected on every screen inside its graph (e.g. a workout opened from the Workout tab).
                     val selected = currentDestination?.hierarchy?.any { it.hasRoute(tab.graph::class) } == true
@@ -145,10 +150,31 @@ fun AppNavHost() {
                     SettingsScreen(
                         onOpenLog = { navController.navigate(LogRoute) { launchSingleTop = true } },
                         onOpenPrivacy = { navController.navigate(PrivacyRoute) { launchSingleTop = true } },
+                        onSignIn = { navController.navigate(LoginRoute) { launchSingleTop = true } },
                     )
                 }
                 composable<LogRoute> { entry -> LogScreen(onBack = { navController.popBackStackOnce(entry) }) }
                 composable<PrivacyRoute> { entry -> PrivacyPolicyScreen(onBack = { navController.popBackStackOnce(entry) }) }
+            }
+
+            navigation<AuthGraph>(startDestination = LoginRoute) {
+                composable<LoginRoute> { entry ->
+                    LoginScreen(
+                        onSignedIn = { navController.leaveAuth() },
+                        onRegister = { navController.navigate(RegisterRoute) { launchSingleTop = true } },
+                        onForgotPassword = { email -> navController.navigate(ResetPasswordRoute(email)) { launchSingleTop = true } },
+                        onBack = { navController.popBackStackOnce(entry) },
+                    )
+                }
+                composable<RegisterRoute> { entry ->
+                    RegisterScreen(
+                        onRegistered = { navController.leaveAuth() },
+                        onBack = { navController.popBackStackOnce(entry) },
+                    )
+                }
+                composable<ResetPasswordRoute> { entry ->
+                    ResetPasswordScreen(onBack = { navController.popBackStackOnce(entry) })
+                }
             }
         }
     }
@@ -174,6 +200,11 @@ private fun <T : Any> NavController.navigateOrReturn(route: T) {
     if (!popBackStack(route, inclusive = false)) {
         navigate(route) { launchSingleTop = true }
     }
+}
+
+/** After signing in or registering: close every sign-in screen and go back to where the user was. */
+private fun NavController.leaveAuth() {
+    popBackStack<AuthGraph>(inclusive = true)
 }
 
 @Composable

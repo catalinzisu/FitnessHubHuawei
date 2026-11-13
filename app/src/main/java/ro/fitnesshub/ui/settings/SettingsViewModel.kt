@@ -14,11 +14,19 @@ import kotlinx.coroutines.launch
 import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.R
 import ro.fitnesshub.data.HealthRepository
+import ro.fitnesshub.data.auth.AuthRepository
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.HealthPermissions
 import ro.fitnesshub.data.health.SeedDataWriter
 import ro.fitnesshub.ui.common.UiMessage
 import ro.fitnesshub.util.AppLog
+
+/** The account row: sign-in missing from the build, signed out, or signed in. */
+sealed interface AccountState {
+    data object NotConfigured : AccountState
+    data object SignedOut : AccountState
+    data class SignedIn(val email: String?) : AccountState
+}
 
 /** State of an optional Health Connect permission. */
 enum class OptionalAccess { Unknown, Unsupported, Off, On }
@@ -28,16 +36,34 @@ data class SettingsUiState(
     val message: UiMessage? = null,
     val backgroundSync: OptionalAccess = OptionalAccess.Unknown,
     val workoutExport: OptionalAccess = OptionalAccess.Unknown,
+    val account: AccountState = AccountState.SignedOut,
 )
 
 class SettingsViewModel(
     private val seedDataWriter: SeedDataWriter,
     private val repository: HealthRepository,
     private val healthConnect: HealthConnectSource,
+    private val auth: AuthRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
+
+    init {
+        // Follows sign-in and sign-out as they happen, wherever they happen.
+        viewModelScope.launch {
+            auth.currentUser.collect { user ->
+                val account = when {
+                    !auth.isConfigured -> AccountState.NotConfigured
+                    user == null -> AccountState.SignedOut
+                    else -> AccountState.SignedIn(user.email)
+                }
+                _state.update { it.copy(account = account) }
+            }
+        }
+    }
+
+    fun signOut() = auth.signOut()
 
     /** Re-reads the optional permissions; called on every resume. */
     fun refresh() {
@@ -113,6 +139,7 @@ class SettingsViewModel(
                     app.container.seedDataWriter,
                     app.container.healthRepository,
                     app.container.healthConnect,
+                    app.container.authRepository,
                 )
             }
         }

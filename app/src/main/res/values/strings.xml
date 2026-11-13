@@ -138,6 +138,46 @@
     <string name="rest_add">+15 s</string>
     <string name="rest_skip">Skip</string>
 
+    <string name="settings_account">Account</string>
+    <string name="settings_account_signed_out">Sign in to keep your workouts on the server</string>
+    <string name="settings_account_signed_in">Signed in as %1$s</string>
+    <string name="settings_account_sign_out">Sign out</string>
+    <string name="settings_account_not_configured">Not available in this build</string>
+    <string name="settings_sign_out_confirm">Sign out? Your workouts stay on this phone.</string>
+
+    <!-- Sign-in (Firebase Authentication) -->
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_password_confirm">Repeat password</string>
+    <string name="auth_show">Show</string>
+    <string name="auth_hide">Hide</string>
+    <string name="auth_sign_in_title">Sign in</string>
+    <string name="auth_sign_in_intro">Your account keeps your training days and workouts on the Fitness Hub server, so they survive a new phone. Health data from the watch stays on this phone.</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
+    <string name="auth_no_account">No account yet?</string>
+    <string name="auth_create_account">Create account</string>
+    <string name="auth_register_title">Create account</string>
+    <string name="auth_register_intro">Use an email you can open: it is how you reset a forgotten password.</string>
+    <string name="auth_password_rule">At least %1$d characters, with a letter and a number.</string>
+    <string name="auth_reset_title">Reset password</string>
+    <string name="auth_reset_intro">Enter the email of your account. We will send you a link to choose a new password.</string>
+    <string name="auth_reset_send">Send reset link</string>
+    <string name="auth_reset_sent">If an account exists for %1$s, a reset link is on its way. Check the spam folder too.</string>
+    <string name="auth_back_to_sign_in">Back to sign in</string>
+    <string name="auth_field_required">Required</string>
+    <string name="auth_field_invalid_email">Enter a valid email address.</string>
+    <string name="auth_field_password_short">Use at least %1$d characters.</string>
+    <string name="auth_field_password_mix">Use at least one letter and one number.</string>
+    <string name="auth_field_password_mismatch">The passwords don\'t match.</string>
+    <string name="auth_error_not_configured">Sign-in isn\'t set up in this build (google-services.json is missing).</string>
+    <string name="auth_error_invalid_credentials">Wrong email or password.</string>
+    <string name="auth_error_email_in_use">An account with this email already exists. Sign in instead.</string>
+    <string name="auth_error_weak_password">This password is too easy to guess. Choose a longer one.</string>
+    <string name="auth_error_network">No internet connection. Try again when you are online.</string>
+    <string name="auth_error_too_many">Too many attempts. Wait a few minutes and try again.</string>
+    <string name="auth_error_unknown">Something went wrong. Try again.</string>
+
     <!-- Placeholders -->
     <string name="coming_soon_coach">The AI coach arrives in week 5: a local plateau detector plus plain-language explanations.</string>
 

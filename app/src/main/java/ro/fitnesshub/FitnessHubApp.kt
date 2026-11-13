@@ -3,12 +3,14 @@ package ro.fitnesshub
 import android.app.Application
 import android.content.Context
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import ro.fitnesshub.data.GymRepository
 import ro.fitnesshub.data.HealthRepository
+import ro.fitnesshub.data.auth.AuthRepository
 import ro.fitnesshub.data.db.AppDatabase
 import ro.fitnesshub.data.health.HealthConnectSource
 import ro.fitnesshub.data.health.SeedDataWriter
@@ -65,4 +67,8 @@ class AppContainer(context: Context) {
      * before onCreate; without it, any Firebase call would crash, so callers check this first.
      */
     val firebaseConfigured: Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
+
+    val authRepository: AuthRepository by lazy {
+        AuthRepository(if (firebaseConfigured) FirebaseAuth.getInstance() else null)
+    }
 }

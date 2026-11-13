@@ -40,6 +40,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable object CoachRoute
 
+// ---- Sign-in screens: their own graph, shown without the bottom bar ----
+
+@Serializable object AuthGraph
+
+@Serializable object LoginRoute
+
+@Serializable object RegisterRoute
+
+/** [email] pre-fills the form with what was typed on the sign-in screen. */
+@Serializable data class ResetPasswordRoute(val email: String = "")
+
 // ---- Settings tab ----
 
 @Serializable object SettingsRoute
