@@ -21,6 +21,7 @@ fun Application.configureSerialization() {
         json(
             Json {
                 ignoreUnknownKeys = true // an older app version may send fields the server doesn't know
+                encodeDefaults = true // write e.g. "isWarmup": false instead of leaving it out
                 explicitNulls = false // leave null fields out of responses
             },
         )
@@ -48,6 +49,9 @@ fun Application.configureErrors() {
         exception<BadRequestException> { call, cause ->
             // Also thrown by Ktor itself when a JSON body can't be read.
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("bad_request", cause.message ?: "Invalid request"))
+        }
+        exception<UnauthorizedException> { call, cause ->
+            call.respond(HttpStatusCode.Unauthorized, ErrorResponse("unauthorized", cause.message ?: "Sign in first"))
         }
         exception<NotFoundException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("not_found", cause.message ?: "Not found"))

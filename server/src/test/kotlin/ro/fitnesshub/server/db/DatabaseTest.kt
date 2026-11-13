@@ -106,4 +106,19 @@ class DatabaseTest {
     fun dataForAnUnknownUser_isRejected(): Unit = runBlocking {
         assertFailsWith<ExposedSQLException> { addWorkout("nobody", clientId = 1) }
     }
+
+    @Test
+    fun ensureUser_createsOnceAndKeepsTheFirstDate(): Unit = runBlocking {
+        val users = UserRepository(db)
+        users.ensure("alice")
+        val firstCreatedAt = db.query { Users.selectAll().single()[Users.createdAt] }
+        Thread.sleep(5)
+
+        users.ensure("alice")
+
+        db.query {
+            assertEquals(1, Users.selectAll().count())
+            assertEquals(firstCreatedAt, Users.selectAll().single()[Users.createdAt])
+        }
+    }
 }

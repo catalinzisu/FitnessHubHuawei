@@ -23,5 +23,6 @@ dependencies {
     implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.content.negotiation) // test client sends/reads JSON
     testImplementation(libs.kotlin.test.junit)
 }
