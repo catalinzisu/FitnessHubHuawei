@@ -22,7 +22,7 @@ Legendă: **C1–C9** = criteriile din barem.
 - [x] A2. Navigație type-safe: rute `@Serializable` în loc de rute text, argumente cu `toRoute()` (C4)
 - [x] A3. Back stack: tab-uri fără duplicate, `launchSingleTop`, „close” sigur (C4)
 - [x] A4. Editare set (Update) → CRUD complet pe seturi (C5)
-- [ ] A5. ViewModel-urile în fișiere separate; evenimente one-shot prin stare, nu callback-uri (C3)
+- [x] A5. ViewModel-urile în fișiere separate; evenimente one-shot prin stare, nu callback-uri (C3)
 
 ## Faza B – Server Ktor (17–23 nov) – C6
 

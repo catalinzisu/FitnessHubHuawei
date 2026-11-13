@@ -254,7 +254,7 @@ private fun ExerciseCard(
     block: ExerciseBlock,
     readOnly: Boolean,
     onOpenProgress: () -> Unit,
-    onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Boolean,
+    onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Unit,
     onEditSet: (SetEntryEntity) -> Unit,
     onDeleteSet: (Long) -> Unit,
     onRemove: () -> Unit,
@@ -369,7 +369,7 @@ private fun SetRow(set: SetEntryEntity, readOnly: Boolean, isPr: Boolean, onEdit
 @Composable
 private fun SetInput(
     block: ExerciseBlock,
-    onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Boolean,
+    onLog: (weight: String, reps: String, rpe: String, warmup: Boolean) -> Unit,
 ) {
     // Reset to a fresh suggestion after every logged set and once "last time" has loaded.
     val keys = arrayOf<Any>(block.exerciseId, block.sets.size, block.previous == null)

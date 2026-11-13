@@ -189,10 +189,13 @@ class ActiveWorkoutViewModel(
             .toSet()
     }
 
-    /** Validates the inputs and logs a set. Returns true if it was saved. */
-    fun logSet(exerciseId: Long, weightText: String, repsText: String, rpeText: String, isWarmup: Boolean): Boolean {
+    /** Validates the inputs and logs a set. Errors are shown through [ActiveWorkoutUiState.message]. */
+    fun logSet(exerciseId: Long, weightText: String, repsText: String, rpeText: String, isWarmup: Boolean) {
         val input = when (val parsed = WorkoutFormat.parseSet(weightText, repsText, rpeText)) {
-            is SetInput.Invalid -> return fail(errorText(parsed.field))
+            is SetInput.Invalid -> {
+                message.value = UiMessage(errorText(parsed.field))
+                return
+            }
             is SetInput.Valid -> parsed
         }
         viewModelScope.launch {
@@ -206,7 +209,6 @@ class ActiveWorkoutViewModel(
                 ?: GymRepository.DEFAULT_REST_SECONDS
             startRest(restSeconds)
         }
-        return true
     }
 
     private fun isNewPr(exerciseId: Long, set: LiftSet): Boolean {
@@ -216,11 +218,6 @@ class ActiveWorkoutViewModel(
             .orEmpty()
         val all = today + set
         return all.lastIndex in Progression.prIndices(all, earlier)
-    }
-
-    private fun fail(text: Int): Boolean {
-        message.value = UiMessage(text)
-        return false
     }
 
     private fun errorText(field: SetField): Int = when (field) {

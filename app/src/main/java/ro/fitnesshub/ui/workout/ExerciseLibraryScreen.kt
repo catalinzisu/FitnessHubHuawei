@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,59 +40,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import ro.fitnesshub.FitnessHubApp
 import ro.fitnesshub.R
-import ro.fitnesshub.data.GymRepository
-import ro.fitnesshub.data.db.ExerciseEntity
 import ro.fitnesshub.gym.ExerciseLibrary
-
-class ExerciseLibraryViewModel(private val repository: GymRepository) : ViewModel() {
-
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query.asStateFlow()
-
-    /** Exercises matching the search, grouped by main muscle in a fixed order. */
-    val groups: StateFlow<List<Pair<String, List<ExerciseEntity>>>> =
-        combine(repository.exercises, _query) { exercises, query ->
-            val q = query.trim()
-            val filtered = if (q.isEmpty()) exercises else exercises.filter { it.name.contains(q, ignoreCase = true) }
-            filtered.groupBy { it.primaryMuscle }
-                .toList()
-                .sortedBy { (muscle, _) -> ExerciseLibrary.MUSCLES.indexOf(muscle).let { if (it < 0) Int.MAX_VALUE else it } }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    fun onQueryChange(value: String) {
-        _query.value = value
-    }
-
-    /** Calls [onDone] with the new id, or with null if the name is taken. */
-    fun addCustom(name: String, muscle: String, equipment: String, type: String, onDone: (Long?) -> Unit) {
-        viewModelScope.launch { onDone(repository.addCustomExercise(name, muscle, equipment, type)) }
-    }
-
-    companion object {
-        val Factory = viewModelFactory {
-            initializer {
-                val app = this[APPLICATION_KEY] as FitnessHubApp
-                ExerciseLibraryViewModel(app.container.gymRepository)
-            }
-        }
-    }
-}
 
 /**
  * Exercise list. In pick mode, tapping an exercise returns it to the previous screen
@@ -106,9 +58,14 @@ fun ExerciseLibraryScreen(
     onOpenExercise: (Long) -> Unit,
     viewModel: ExerciseLibraryViewModel = viewModel(factory = ExerciseLibraryViewModel.Factory),
 ) {
-    val query by viewModel.query.collectAsStateWithLifecycle()
-    val groups by viewModel.groups.collectAsStateWithLifecycle()
-    var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // One-shot event: a new custom exercise was saved. In pick mode it goes straight back to the caller.
+    LaunchedEffect(state.createdExerciseId) {
+        val id = state.createdExerciseId ?: return@LaunchedEffect
+        viewModel.createdExerciseHandled()
+        if (pickMode) onPicked(id)
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -123,7 +80,7 @@ fun ExerciseLibraryScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
+            FloatingActionButton(onClick = viewModel::openAddDialog) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.exercises_add_custom))
             }
         },
@@ -134,7 +91,7 @@ fun ExerciseLibraryScreen(
         ) {
             item {
                 OutlinedTextField(
-                    value = query,
+                    value = state.query,
                     onValueChange = viewModel::onQueryChange,
                     label = { Text(stringResource(R.string.exercises_search)) },
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
@@ -142,7 +99,7 @@ fun ExerciseLibraryScreen(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 )
             }
-            if (groups.isEmpty()) {
+            if (state.groups.isEmpty()) {
                 item {
                     Text(
                         stringResource(R.string.exercises_none_found),
@@ -150,7 +107,7 @@ fun ExerciseLibraryScreen(
                     )
                 }
             }
-            groups.forEach { (muscle, exercises) ->
+            state.groups.forEach { (muscle, exercises) ->
                 item(key = "header-$muscle") {
                     Text(
                         ExerciseLibrary.label(muscle),
@@ -177,18 +134,12 @@ fun ExerciseLibraryScreen(
         }
     }
 
-    if (showAddDialog) {
+    state.addDialog?.let { dialog ->
         AddExerciseDialog(
-            onDismiss = { showAddDialog = false },
-            onSave = { name, muscle, equipment, type, onResult ->
-                viewModel.addCustom(name, muscle, equipment, type) { id ->
-                    onResult(id != null)
-                    if (id != null) {
-                        showAddDialog = false
-                        if (pickMode) onPicked(id)
-                    }
-                }
-            },
+            error = dialog.error,
+            onNameChanged = viewModel::onAddNameChanged,
+            onDismiss = viewModel::closeAddDialog,
+            onSave = viewModel::addCustom,
         )
     }
 }
@@ -196,14 +147,15 @@ fun ExerciseLibraryScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AddExerciseDialog(
+    error: Int?,
+    onNameChanged: () -> Unit,
     onDismiss: () -> Unit,
-    onSave: (name: String, muscle: String, equipment: String, type: String, onResult: (Boolean) -> Unit) -> Unit,
+    onSave: (name: String, muscle: String, equipment: String, type: String) -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var muscle by rememberSaveable { mutableStateOf(ExerciseLibrary.MUSCLES.first()) }
     var equipment by rememberSaveable { mutableStateOf(ExerciseLibrary.EQUIPMENT.first()) }
     var type by rememberSaveable { mutableStateOf(ExerciseLibrary.TYPES.first()) }
-    var error by rememberSaveable { mutableStateOf<Int?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -215,7 +167,10 @@ private fun AddExerciseDialog(
             ) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it; error = null },
+                    onValueChange = {
+                        name = it
+                        onNameChanged()
+                    },
                     label = { Text(stringResource(R.string.exercises_name)) },
                     singleLine = true,
                     isError = error != null,
@@ -228,13 +183,7 @@ private fun AddExerciseDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                if (name.isBlank()) {
-                    error = R.string.exercises_name_required
-                } else {
-                    onSave(name, muscle, equipment, type) { ok -> if (!ok) error = R.string.exercises_duplicate }
-                }
-            }) { Text(stringResource(R.string.exercises_save)) }
+            TextButton(onClick = { onSave(name, muscle, equipment, type) }) { Text(stringResource(R.string.exercises_save)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
