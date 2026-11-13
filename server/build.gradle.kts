@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Fitness Hub backend: a Ktor server that runs on the JVM (not on the phone).
 // Start it with:  ./gradlew :server:run   (listens on port 8080, or $PORT)
 plugins {
@@ -10,6 +12,16 @@ application {
     mainClass.set("ro.fitnesshub.server.ApplicationKt")
 }
 
+// `run` passes the Firebase project id from local.properties (firebase.projectId=...) unless the
+// FIREBASE_PROJECT_ID environment variable is already set. local.properties is not in git.
+tasks.named<JavaExec>("run") {
+    val localProperties = rootProject.file("local.properties")
+    if (System.getenv("FIREBASE_PROJECT_ID") == null && localProperties.exists()) {
+        val properties = Properties().apply { localProperties.inputStream().use { load(it) } }
+        properties.getProperty("firebase.projectId")?.let { environment("FIREBASE_PROJECT_ID", it) }
+    }
+}
+
 dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
@@ -18,6 +30,8 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.request.validation)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt) // checks Firebase ID tokens (JWT); brings java-jwt + jwks-rsa
     implementation(libs.exposed.core) // SQL from Kotlin code (tables, queries)
     implementation(libs.exposed.jdbc)
     implementation(libs.h2) // the database itself: a single file, no install needed

@@ -5,7 +5,7 @@ import io.ktor.server.plugins.BadRequestException
 import ro.fitnesshub.server.db.UserRepository
 import ro.fitnesshub.server.userId
 
-/** The id of the user making the request (401 if unknown). Creates their row on first use. */
+/** The Firebase uid from the verified token (401 without one). Creates the user's row on first use. */
 suspend fun ApplicationCall.currentUser(users: UserRepository): String {
     val uid = userId()
     users.ensure(uid)

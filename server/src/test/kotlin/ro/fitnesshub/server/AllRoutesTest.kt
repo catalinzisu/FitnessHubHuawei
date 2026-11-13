@@ -64,7 +64,7 @@ class AllRoutesTest {
         // creating a new, empty database when the server reconnects.
         val name = "health-${System.nanoTime()}"
         val owner = AppDatabase.inMemory(name)
-        application { module(AppDatabase("jdbc:h2:mem:$name;IFEXISTS=TRUE")) }
+        application { module(AppDatabase("jdbc:h2:mem:$name;IFEXISTS=TRUE"), TestTokens.config) }
         val client = clientFor(null)
         assertEquals(HttpStatusCode.OK, client.get("/health").status)
 

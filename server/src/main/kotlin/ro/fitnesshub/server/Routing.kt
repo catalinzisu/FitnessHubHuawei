@@ -2,6 +2,7 @@ package ro.fitnesshub.server
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
@@ -42,12 +43,14 @@ fun Application.configureRouting(database: AppDatabase) {
             )
         }
 
-        // Everything under /api belongs to a user.
-        route("/api") {
-            profileRoutes(users, profiles)
-            templateRoutes(users, templates)
-            workoutRoutes(users, workouts)
-            statsRoutes(users, profiles, workouts)
+        // Everything under /api belongs to a user: a valid Firebase ID token is required (Auth.kt).
+        authenticate(FIREBASE_AUTH) {
+            route("/api") {
+                profileRoutes(users, profiles)
+                templateRoutes(users, templates)
+                workoutRoutes(users, workouts)
+                statsRoutes(users, profiles, workouts)
+            }
         }
     }
 }
